@@ -27,12 +27,12 @@ fun DrawerMenu(navController: NavController, closeDrawer: () -> Unit) {
         }
 
         DrawerItem("Home") {
-            navController.navigate("home")
+            navController.navigate("home/test")
             closeDrawer()
         }
 
         DrawerItem("Profile") {
-            navController.navigate("profile")
+            navController.navigate("profile/test")
             closeDrawer()
         }
 
