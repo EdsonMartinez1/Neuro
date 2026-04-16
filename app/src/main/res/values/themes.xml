@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.NavHost1" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Fondo del splash nativo = mismo morado de tu SplashScreen -->
+        <item name="android:windowBackground">@color/splash_bg</item>
+    </style>
 
-    <style name="Theme.NavHost1" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Tema del splash mientras carga -->
+    <style name="Theme.NavHost1.Splash" parent="Theme.NavHost1">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
 </resources>

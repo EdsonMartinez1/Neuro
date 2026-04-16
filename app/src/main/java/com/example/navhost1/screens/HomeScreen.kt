@@ -1,5 +1,6 @@
 package com.example.navhost1.screens
 
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,10 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun HomeScreen(navController: NavController, username: String?) {
@@ -48,7 +51,7 @@ fun HomeScreen(navController: NavController, username: String?) {
 
                 Column {
                     Text(
-                        text = "Hola 👋",
+                        text = stringResource(R.string.home_saludo),
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
@@ -83,7 +86,7 @@ fun HomeScreen(navController: NavController, username: String?) {
             Spacer(modifier = Modifier.height(30.dp))
 
             Text(
-                text = "Tu bienestar emocional 💜",
+                text = stringResource(R.string.home_msg_bienvenida),
                 color = Color(0xFF4A3F8F),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
@@ -99,11 +102,11 @@ fun HomeScreen(navController: NavController, username: String?) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    MenuCard("Chat IA", android.R.drawable.ic_dialog_email) {
+                    MenuCard(stringResource(R.string.home_chat_ia), android.R.drawable.ic_dialog_email) {
                         navController.navigate("chat")
                     }
 
-                    MenuCard("Herramientas", android.R.drawable.ic_menu_manage) {
+                    MenuCard(stringResource(R.string.home_herramientas), android.R.drawable.ic_menu_manage) {
                         navController.navigate("tools")
                     }
                 }
@@ -115,11 +118,11 @@ fun HomeScreen(navController: NavController, username: String?) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    MenuCard("Diario", android.R.drawable.ic_menu_edit) {
+                    MenuCard(stringResource(R.string.home_diario), android.R.drawable.ic_menu_edit) {
                         navController.navigate("diary")
                     }
 
-                    MenuCard("Contenido", android.R.drawable.ic_menu_info_details) {
+                    MenuCard(stringResource(R.string.home_contenido), android.R.drawable.ic_menu_info_details) {
                         navController.navigate("content")
                     }
                 }

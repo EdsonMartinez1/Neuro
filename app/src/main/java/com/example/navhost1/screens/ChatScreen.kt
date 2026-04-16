@@ -10,20 +10,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-
+import com.example.navhost1.R
 data class Message(val text: String, val isUser: Boolean)
 
 @Composable
 fun ChatScreen(navController: NavController) {
 
     var message by remember { mutableStateOf(TextFieldValue("")) }
+    val initialGreeting = stringResource(R.string.chat_ia_saludo)
     var messages by remember {
         mutableStateOf(
             listOf(
-                Message("Hola 👋 ¿Cómo te sientes hoy?", false)
+                Message(initialGreeting, false)
             )
         )
     }
@@ -51,7 +53,7 @@ fun ChatScreen(navController: NavController) {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                text = "Chat IA",
+                text = stringResource(R.string.chat_ia_titulo),
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium
             )
@@ -81,7 +83,7 @@ fun ChatScreen(navController: NavController) {
             OutlinedTextField(
                 value = message,
                 onValueChange = { message = it },
-                placeholder = { Text("Escribe un mensaje...") },
+                placeholder = { stringResource(R.string.chat_ia_msg) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(20.dp)
             )
@@ -103,7 +105,7 @@ fun ChatScreen(navController: NavController) {
                     containerColor = Color(0xFF6C4DFF)
                 )
             ) {
-                Text("Enviar")
+                Text(stringResource(R.string.chat_ia_enviar))
             }
         }
     }

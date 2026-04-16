@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val Purple   = Color(0xFF7B2FBE)
@@ -33,7 +35,7 @@ fun SettingsScreen(navController: NavController) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Configuracion",
+                        text = stringResource(R.string.configuracion_titulo),
                         color = Color.White,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp
@@ -71,37 +73,37 @@ fun SettingsScreen(navController: NavController) {
                 .padding(padding)
         ) {
             SettingsItem(
-                title    = "Cuenta",
-                subtitle = "Edita tu informacion personal",
+                title    = stringResource(R.string.configuracion_cuenta),
+                subtitle = stringResource(R.string.configuracion_cuenta_subtitulo),
                 onClick  = { }
             )
             HorizontalDivider(color = Divider, thickness = 0.8.dp)
 
             SettingsItem(
-                title    = "Preferencias Emocionales",
-                subtitle = "Personaliza tu experiencia",
+                title    = stringResource(R.string.configuracion_preferencias),
+                subtitle = stringResource(R.string.configuracion_preferencias_subtitulo),
                 onClick  = { }
             )
             HorizontalDivider(color = Divider, thickness = 0.8.dp)
 
             SettingsItem(
-                title    = "Notificaciones",
-                subtitle = "Configura recordatorios",
+                title    = stringResource(R.string.configuracion_notificaciones),
+                subtitle = stringResource(R.string.configuracion_notificaciones_subtitulo),
                 onClick  = { }
             )
             HorizontalDivider(color = Divider, thickness = 0.8.dp)
 
             // ✅ Idioma conectado
             SettingsItem(
-                title    = "Idioma",
-                subtitle = "Cambia el idioma de la app",
+                title    = stringResource(R.string.configuracion_idioma),
+                subtitle = stringResource(R.string.configuracion_idioma_subtitulo),
                 onClick  = { navController.navigate("language") }
             )
             HorizontalDivider(color = Divider, thickness = 0.8.dp)
 
             SettingsToggleItem(
-                title           = "Apariencia",
-                subtitle        = "Personaliza la app",
+                title           = stringResource(R.string.configuracion_apariencia),
+                subtitle        = stringResource(R.string.configuracion_apariencia_subtitulo),
                 checked         = darkMode,
                 onCheckedChange = { darkMode = it }
             )

@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val PurpleBar = Color(0xFF6A1B9A)
@@ -28,7 +30,7 @@ fun SupportScreen(navController: NavController) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Centro de soporte",
+                        text = stringResource(R.string.support_titulo),
                         color = Color.White,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp
@@ -60,12 +62,12 @@ fun SupportScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ✅ Preguntas frecuentes conectado
-            SupportButton(label = "Preguntas frecuentes") {
+            SupportButton(label = stringResource(R.string.support_faq)) {
                 navController.navigate("faq")
             }
 
             // ✅ Contacto a soporte conectado
-            SupportButton(label = "Contacto a soporte") {
+            SupportButton(label = stringResource(R.string.support_contacto)) {
                 navController.navigate("contact")
             }
 

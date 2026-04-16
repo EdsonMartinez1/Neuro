@@ -9,9 +9,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun AnxietyScreen(navController: NavController) {
@@ -27,7 +29,7 @@ fun AnxietyScreen(navController: NavController) {
             Text("←")
         }
 
-        Text("Control de Ansiedad 💚", fontSize = 22.sp)
+        Text(stringResource(R.string.anxiety_control), fontSize = 22.sp)
 
         Spacer(modifier = Modifier.height(20.dp))
 

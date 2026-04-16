@@ -17,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val BgScreen   = Color(0xFFF5F5F5)
@@ -34,18 +36,20 @@ private val TextDark   = Color(0xFF212121)
 private val BgResponse = Color(0xFFFFFFFF)
 private val BorderGray = Color(0xFFBDBDBD)
 
-private val problemOptions = listOf(
-    "Problema",
-    "Error en la app",
-    "Problema con mi cuenta",
-    "Problema con el pago",
-    "Otro"
-)
+
 
 // ── Pantalla ──────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactScreen(navController: NavController) {
+
+    val problemOptions = listOf(
+        stringResource(R.string.contact_problema),
+        stringResource(R.string.contact_problema_1),
+        stringResource(R.string.contact_problema_2),
+        stringResource(R.string.contact_problema_3),
+        stringResource(R.string.contact_problema_4)
+    )
 
     var selectedProblem by remember { mutableStateOf(problemOptions[0]) }
     var expanded        by remember { mutableStateOf(false) }
@@ -105,7 +109,7 @@ fun ContactScreen(navController: NavController) {
 
             // ── Título ────────────────────────────────────────────────────────
             Text(
-                text = "Contáctanos",
+                text = stringResource(R.string.contact_titulo),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark,
@@ -166,7 +170,7 @@ fun ContactScreen(navController: NavController) {
                 onValueChange = { messageText = it },
                 placeholder = {
                     Text(
-                        text = "Danos más detalles sobre tu problema para ayudarte más rápido",
+                        text = stringResource(R.string.contact_area_texto),
                         color = TextHint,
                         fontSize = 14.sp
                     )
@@ -206,7 +210,7 @@ fun ContactScreen(navController: NavController) {
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = "Enviar",
+                    text = stringResource(R.string.contact_boton_enviar),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -216,7 +220,7 @@ fun ContactScreen(navController: NavController) {
             if (submitted) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "✅ Tu mensaje fue enviado. Te responderemos pronto.",
+                    text = stringResource(R.string.contact_confirmacion_envio),
                     color = Color(0xFF388E3C),
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
@@ -230,7 +234,7 @@ fun ContactScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Respuestas de soporte",
+                text = stringResource(R.string.contact_respuestas_soporte_titulo),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = TextDark,
@@ -251,7 +255,7 @@ fun ContactScreen(navController: NavController) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Aún no hay respuestas.\nTe notificaremos cuando soporte te contacte.",
+                        text = stringResource(R.string.contact_respuestas_soporte),
                         color = TextHint,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,

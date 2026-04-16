@@ -10,13 +10,24 @@ import com.example.navhost1.screens.*
 fun NavGraph(navController: NavHostController) {
 
     NavHost(
-        navController = navController,
-        startDestination = "login"
+        navController  = navController,
+        startDestination = "splash"        // ✅ Splash como pantalla inicial
     ) {
+
+        // ✨ SPLASH
+        composable("splash") {
+            SplashScreen(navController)
+        }
 
         // 🔐 LOGIN
         composable("login") {
             LoginScreen(navController)
+        }
+
+        // 🎬 ONBOARDING
+        composable("onboarding/{username}") { backStackEntry ->
+            val username = backStackEntry.arguments?.getString("username")
+            OnboardingScreen(navController, username)
         }
 
         // 🏠 HOME
@@ -56,7 +67,7 @@ fun NavGraph(navController: NavHostController) {
             ContentScreen(navController)
         }
 
-        // 🧪 OPCIONAL
+        // 🧪 REGISTRO
         composable("register") {
             Text("Pantalla Registro")
         }
@@ -88,7 +99,7 @@ fun NavGraph(navController: NavHostController) {
             SupportScreen(navController)
         }
 
-        // 📧 CONTACTO A SOPORTE
+        // 📧 CONTACTO
         composable("contact") {
             ContactScreen(navController)
         }
@@ -108,9 +119,14 @@ fun NavGraph(navController: NavHostController) {
             PrivacyScreen(navController)
         }
 
-        // ❓ PREGUNTAS FRECUENTES
+        // ❓ FAQ
         composable("faq") {
             FaqScreen(navController)
+        }
+
+        // 🚪 CERRAR SESIÓN
+        composable("logout") {
+            LogoutScreen(navController)
         }
     }
 }

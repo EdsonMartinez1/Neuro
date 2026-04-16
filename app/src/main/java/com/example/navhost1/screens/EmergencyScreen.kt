@@ -14,11 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val RedBg     = Color(0xFFD32F2F)
@@ -79,7 +81,7 @@ fun EmergencyScreen(navController: NavController) {
 
             // ── Título ────────────────────────────────────────────────────────
             Text(
-                text = "Emergencias",
+                text = stringResource(R.string.emergency_titulo),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = White,
@@ -90,7 +92,7 @@ fun EmergencyScreen(navController: NavController) {
 
             // ── Subtítulo ─────────────────────────────────────────────────────
             Text(
-                text = "Líneas de ayuda\ndisponibles 24/7",
+                text = stringResource(R.string.emergency_subtitulo),
                 fontSize = 15.sp,
                 color = White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center,
@@ -101,7 +103,7 @@ fun EmergencyScreen(navController: NavController) {
 
             // ── Botón: Línea de crisis ────────────────────────────────────────
             EmergencyButton(
-                label = "Línea de crisis",
+                label = stringResource(R.string.emergency_linea_crisis),
                 onClick = { /* TODO: llamar número de crisis */ }
             )
 
@@ -109,7 +111,7 @@ fun EmergencyScreen(navController: NavController) {
 
             // ── Botón: Emergencia ─────────────────────────────────────────────
             EmergencyButton(
-                label = "Emergencia",
+                label = stringResource(R.string.emergency_emergencia),
                 onClick = { /* TODO: llamar número de emergencia */ }
             )
         }

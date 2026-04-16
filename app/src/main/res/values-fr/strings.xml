@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NeuraBloom</string>
+
+    <!-- LOGIN -->
+    <string name="login_subtitulo">Votre compagnon émotionnel IA</string>
+    <string name="login_boton_tab">Se connecter</string>
+    <string name="registro_tab">S\'inscrire</string>
+    <string name="login_email">Adresse e-mail</string>
+    <string name="login_password">Mot de passe</string>
+    <string name="login_olvide">Mot de passe oublié?</string>
+    <string name="login_boton">SE CONNECTER</string>
+    <string name="registro_nombre">Nom complet</string>
+    <string name="registro_confirmar">Confirmer le mot de passe</string>
+    <string name="registro_boton">CRÉER UN COMPTE</string>
+    <string name="login_o">ou continuer avec</string>
+    <string name="login_google">Continuer avec Google</string>
+    <string name="login_apple">Continuer avec Apple</string>
+    <string name="login_facebook">Continuer avec Facebook</string>
+
+    <!-- ONBOARDING -->
+    <string name="onboarding_subtitulo">Accompagnement IA pour votre bien-être mental</string>
+    <string name="onboarding_herramienta_titulo">Outils pour vous</string>
+    <string name="onboarding_herramientas">Méditation, respiration et exercices pour réduire l\'anxiété et le stress</string>
+    <string name="onboarding_disponible">Toujours disponible</string>
+    <string name="onboarding_chat">Un chat de soutien disponible quand vous en avez le plus besoin</string>
+    <string name="onboarding_siguiente">Suivant</string>
+    <string name="onboarding_comenzar">Commencer</string>
+    <string name="onboarding_saltar">Passer</string>
+
+    <!-- HOME -->
+    <string name="home_saludo">Bonjour 👋</string>
+    <string name="home_msg_bienvenida">Votre bien-être émotionnel 💜</string>
+    <string name="home_chat_ia">Chat IA</string>
+    <string name="home_herramientas">Outils</string>
+    <string name="home_diario">Journal</string>
+    <string name="home_contenido">Contenu</string>
+
+    <!-- CHAT IA -->
+    <string name="chat_ia_saludo">Bonjour 👋 Comment vous sentez-vous aujourd\'hui?</string>
+    <string name="chat_ia_titulo">Chat IA</string>
+    <string name="chat_ia_msg">Écrire un message...</string>
+    <string name="chat_ia_enviar">Envoyer</string>
+
+    <!-- PERFIL -->
+    <string name="profile_titulo">Profil utilisateur</string>
+    <string name="profile_email">Adresse e-mail</string>
+    <string name="profile_emergencias">Urgence</string>
+    <string name="profile_nombre_usuario">Nom d\'utilisateur</string>
+    <string name="profile_telefono">Téléphone</string>
+    <string name="profile_fe_na">Date de naissance</string>
+    <string name="profile_planes">Abonnements</string>
+    <string name="profile_plan_actual">Abonnement actuel</string>
+    <string name="profile_configuracion">Paramètres</string>
+    <string name="profile_accesibilidad">Accessibilité</string>
+    <string name="profile_legal">Légal</string>
+    <string name="profile_privacidad">Confidentialité</string>
+    <string name="profile_soporte">Assistance</string>
+    <string name="profile_cerrar_sesion">Déconnexion</string>
+
+    <!-- EMERGENCIAS -->
+    <string name="emergency_titulo">Urgence</string>
+    <string name="emergency_subtitulo">Lignes d\'aide disponibles 24h/24 7j/7</string>
+    <string name="emergency_linea_crisis">Ligne de crise</string>
+    <string name="emergency_emergencia">Urgence</string>
+
+    <!-- PLANES -->
+    <string name="planes_titulo_premium">PREMIUM</string>
+    <string name="planes_subtitulo_premium">Déverrouillez toutes les fonctionnalités</string>
+    <string name="planes_premium_funciones_1">Accès illimité aux outils</string>
+    <string name="planes_premium_funciones_2">Méditation guidée</string>
+    <string name="planes_premium_funciones_3">Suivi avancé</string>
+    <string name="planes_premium_funciones_4">Contenu exclusif</string>
+    <string name="planes_boton_suscribirse">S\'abonner</string>
+    <string name="planes_titulo_free">FREEMIUM</string>
+    <string name="planes_subtitulo_free">Fonctionnalités gratuites</string>
+    <string name="planes_freemium_funciones_1">Outils de base</string>
+    <string name="planes_freemium_funciones_2">Journal émotionnel</string>
+    <string name="planes_freemium_funciones_3">Contenu limité</string>
+    <string name="planes_freemium_funciones_4">Assistance standard</string>
+    <string name="planes_plan_actual">Abonnement actuel</string>
+
+    <!-- PLAN ACTUAL -->
+    <string name="plan_actual_titulo">PREMIUM</string>
+    <string name="plan_actual_subtitulo">Déverrouillez toutes les fonctionnalités</string>
+    <string name="plan_actual_funciones_1">Accès illimité aux outils</string>
+    <string name="plan_actual_funciones_2">Méditation guidée</string>
+    <string name="plan_actual_funciones_3">Suivi avancé</string>
+    <string name="plan_actual_funciones_4">Contenu exclusif</string>
+    <string name="plan_actual_suscribirse">S\'abonner</string>
+    <string name="plan_actual_comparar">Voir la comparaison des abonnements</string>
+
+    <!-- CONFIGURACIÓN -->
+    <string name="configuracion_titulo">Paramètres</string>
+    <string name="configuracion_cuenta">Compte</string>
+    <string name="configuracion_cuenta_subtitulo">Modifiez vos informations personnelles</string>
+    <string name="configuracion_preferencias">Préférences émotionnelles</string>
+    <string name="configuracion_preferencias_subtitulo">Personnalisez votre expérience</string>
+    <string name="configuracion_notificaciones">Notifications</string>
+    <string name="configuracion_notificaciones_subtitulo">Configurer les rappels</string>
+    <string name="configuracion_idioma">Langue</string>
+    <string name="configuracion_idioma_subtitulo">Changer la langue de l\'application</string>
+    <string name="configuracion_apariencia">Apparence</string>
+    <string name="configuracion_apariencia_subtitulo">Personnaliser l\'application</string>
+
+    <!-- LENGUAJE -->
+    <string name="language_titulo">Langue</string>
+    <string name="language_mx">Espagnol Mexique</string>
+    <string name="language_en">Anglais US</string>
+    <string name="language_fr">Français</string>
+
+    <!-- LEGAL -->
+    <string name="legal_titulo">Légal</string>
+    <string name="legal_subtitulo">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam gravida venenatis accumsan. In mi massa, tempus at quam id, vehicula blandit arcu.</string>
+    <string name="legal_terminos">Conditions d\'utilisation</string>
+    <string name="legal_terminos_subtitulo">Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante.</string>
+    <string name="legal_responsabilidad">Responsabilité</string>
+    <string name="legal_responsabilidad_subtitulo">Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra.</string>
+    <string name="legal_modificaciones">Modifications</string>
+    <string name="legal_modificaciones_subtitulo">Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum.</string>
+
+    <!-- PRIVACIDAD -->
+    <string name="privacidad_titulo">Confidentialité</string>
+    <string name="privacidad_subtitulo">Votre confidentialité est importante pour nous. Cette politique explique quelles informations nous collectons et comment nous les utilisons.</string>
+    <string name="privacidad_datos">Données collectées</string>
+    <string name="privacidad_datos_subtitulo">Nous collectons les informations que vous fournissez directement, telles que votre nom, adresse e-mail et préférences dans l\'application.</string>
+    <string name="privacidad_uso">Utilisation des informations</string>
+    <string name="privacidad_uso_subtitulo">Nous utilisons les informations pour personnaliser votre expérience, améliorer nos services et communiquer avec vous si nécessaire.</string>
+    <string name="privacidad_derechos">Vos droits</string>
+    <string name="privacidad_derechos_subtitulo">Vous pouvez demander l\'accès, la correction ou la suppression de vos données personnelles à tout moment via la section Assistance.</string>
+
+    <!-- SOPORTE -->
+    <string name="support_titulo">Centre d\'assistance</string>
+    <string name="support_faq">Questions fréquentes</string>
+    <string name="support_contacto">Contacter l\'assistance</string>
+
+    <!-- FAQ -->
+    <string name="faq_titulo">Questions fréquentes</string>
+    <string name="faq_pregunta_1">Comment fonctionne l\'application?</string>
+    <string name="faq_respuesta_1">Neuro est une application de bien-être mental qui propose des outils comme la méditation, la respiration, un journal émotionnel et un chat de soutien.</string>
+    <string name="faq_pregunta_2">Mes données sont-elles en sécurité?</string>
+    <string name="faq_respuesta_2">Oui. Toutes vos informations sont confidentielles et protégées. Consultez notre politique de confidentialité pour plus de détails.</string>
+    <string name="faq_pregunta_3">Que comprend le plan Premium?</string>
+    <string name="faq_respuesta_3">Le plan Premium déverrouille tous les outils, des sessions guidées illimitées, du contenu exclusif et un suivi avancé.</string>
+    <string name="faq_pregunta_4">Puis-je annuler mon abonnement?</string>
+    <string name="faq_respuesta_4">Oui, vous pouvez annuler à tout moment depuis votre profil dans la section Abonnement actuel.</string>
+    <string name="faq_pregunta_5">L\'application remplace-t-elle un professionnel?</string>
+    <string name="faq_respuesta_5">Non. Neuro est un soutien complémentaire. Si vous avez besoin d\'aide urgente, utilisez le bouton Urgence dans votre profil.</string>
+    <string name="faq_pregunta_6">Comment contacter l\'assistance?</string>
+    <string name="faq_respuesta_6">Allez dans Profil, puis Assistance et ensuite Contacter l\'assistance. Envoyez-nous un message et nous vous répondrons dès que possible.</string>
+
+    <!-- CONTACTO -->
+    <string name="contact_titulo">Nous contacter</string>
+    <string name="contact_problema">Problème</string>
+    <string name="contact_problema_1">Erreur de l\'application</string>
+    <string name="contact_problema_2">Problème de compte</string>
+    <string name="contact_problema_3">Problème de paiement</string>
+    <string name="contact_problema_4">Autre</string>
+    <string name="contact_boton_enviar">Envoyer</string>
+    <string name="contact_confirmacion_envio">Votre message a été envoyé. Nous vous répondrons bientôt.</string>
+    <string name="contact_area_texto">Donnez-nous plus de détails sur votre problème pour vous aider plus rapidement</string>
+    <string name="contact_respuestas_soporte_titulo">Réponses de l\'assistance</string>
+    <string name="contact_respuestas_soporte">Pas encore de réponses. Nous vous notifierons quand l\'assistance vous contactera.</string>
+
+    <!-- TOOLS -->
+    <string name="tools_titulo">Outils de bien-être</string>
+    <string name="tools_respiracion_titulo">Respiration</string>
+    <string name="tools_meditacion_titulo">Méditation</string>
+    <string name="tools_ansiedad_titulo">Anxiété</string>
+    <string name="tools_gratitud_titulo">Gratitude</string>
+    <string name="tools_autoestima_titulo">Estime de soi</string>
+
+    <!-- RESPIRACIÓN -->
+    <string name="breathing_in">Inspirez</string>
+    <string name="breathing_ex">Expirez</string>
+
+    <!-- MEDITACIÓN -->
+    <string name="meditation_titulo">Méditation guidée</string>
+    <string name="meditation_subtitulo">Fermez les yeux et respirez profondément</string>
+
+    <!-- ANSIEDAD -->
+    <string name="anxiety_control">Contrôle de l\'anxiété 💚</string>
+
+    <!-- GRATITUD -->
+    <string name="gratitude_diario">Journal de gratitude</string>
+    <string name="gratitude_persona">Personne</string>
+    <string name="gratitude_lugar">Lieu</string>
+    <string name="gratitude_aprendizaje">Apprentissage</string>
+    <string name="gratitude_guardar">Enregistrer</string>
+
+    <!-- AUTOESTIMA -->
+    <string name="self_titulo">Estime de soi</string>
+    <string name="self_op_1">Je suis suffisant</string>
+    <string name="self_op_2">Je grandis</string>
+    <string name="self_op_3">Je me fais confiance</string>
+    <string name="self_op_4">Je mérite de bonnes choses</string>
+
+    <!-- DIARIO -->
+    <string name="diario_titulo">Mon journal</string>
+    <string name="diario_subtitulo">Comment vous sentez-vous aujourd\'hui?</string>
+    <string name="diario_guardar">Enregistrer l\'entrée</string>
+
+    <!-- CONTENIDO -->
+    <string name="content_titulo_video_1">Introduction à l\'anxiété</string>
+    <string name="content_titulo_video_2">Techniques de respiration</string>
+    <string name="content_titulo_video_3">Pleine conscience de base</string>
+    <string name="content_titulo_video_4">Gestion du stress</string>
+    <string name="content_titulo_video_5">Estime de soi positive</string>
+    <string name="content_titulo_video_6">Méditation guidée</string>
+
+    <!-- CERRAR SESIÓN -->
+    <string name="logout_titulo">Déconnexion</string>
+    <string name="logout_mensaje">Êtes-vous sûr de vouloir vous déconnecter?</string>
+    <string name="logout_cancelar">Annuler</string>
+    <string name="logout_salir">Quitter</string>
+
+</resources>

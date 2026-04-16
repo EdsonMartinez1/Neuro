@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun MeditationScreen(navController: NavController) {
@@ -45,7 +47,7 @@ fun MeditationScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Meditación guiada",
+                text = stringResource(R.string.meditation_titulo),
                 color = Color.White,
                 fontSize = 24.sp
             )
@@ -53,7 +55,7 @@ fun MeditationScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Cierra los ojos y respira profundo",
+                text = stringResource(R.string.meditation_subtitulo),
                 color = Color.White.copy(alpha = 0.8f)
             )
         }

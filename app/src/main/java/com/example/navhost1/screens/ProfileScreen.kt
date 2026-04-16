@@ -12,10 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
+import com.example.navhost1.R
 @Composable
 fun ProfileScreen(navController: NavController, username: String?) {
 
@@ -49,9 +50,9 @@ fun ProfileScreen(navController: NavController, username: String?) {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Perfil de usuario",  color = Color.White, fontSize = 18.sp)
+                    Text(text = stringResource(R.string.profile_titulo),   color = Color.White, fontSize = 18.sp)
                     Text(text = username ?: "Usuario", color = Color.White, fontSize = 14.sp)
-                    Text(text = "Correo electrónico",  color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Text(text = stringResource(R.string.profile_email),  color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                 }
                 Box(
                     modifier = Modifier
@@ -69,14 +70,14 @@ fun ProfileScreen(navController: NavController, username: String?) {
             shape = RoundedCornerShape(50),
             modifier = Modifier.padding(16.dp).height(50.dp)
         ) {
-            Text("Emergencias", color = Color.White)
+            Text(stringResource(R.string.profile_emergencias), color = Color.White)
         }
 
         // 📝 FORMULARIO
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            ProfileField("Nombre de usuario", username ?: "Usuario")
-            ProfileField("Teléfono", "")
-            ProfileField("Fecha de nacimiento", "")
+            ProfileField(stringResource(R.string.profile_nombre_usuario), username ?: "Usuario")
+            ProfileField(stringResource(R.string.profile_telefono), "")
+            ProfileField(stringResource(R.string.profile_fe_na), "")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -87,24 +88,24 @@ fun ProfileScreen(navController: NavController, username: String?) {
                 .fillMaxWidth()
                 .background(Color.White)
         ) {
-            OptionItem("Planes")       { navController.navigate("planes") }
+            OptionItem(stringResource(R.string.profile_planes))        { navController.navigate("planes") }
             HorizontalDivider()
-            OptionItem("Plan actual")  { navController.navigate("premium") }
+            OptionItem(stringResource(R.string.profile_plan_actual))   { navController.navigate("premium") }
             HorizontalDivider()
-            OptionItem("Configuración") { navController.navigate("settings") }
+            OptionItem(stringResource(R.string.profile_configuracion)) { navController.navigate("settings") }
             HorizontalDivider()
-            OptionItem("Accesibilidad")
+            OptionItem(stringResource(R.string.profile_accesibilidad))
             HorizontalDivider()
-            OptionItem("Legal")        { navController.navigate("legal") }
+            OptionItem(stringResource(R.string.profile_legal))         { navController.navigate("legal") }
             HorizontalDivider()
-            OptionItem("Privacidad")   { navController.navigate("privacy") }
+            OptionItem(stringResource(R.string.profile_privacidad))    { navController.navigate("privacy") }
             HorizontalDivider()
-            OptionItem("Soporte")      { navController.navigate("support") }
+            OptionItem(stringResource(R.string.profile_soporte))       { navController.navigate("support") }
             HorizontalDivider()
-            OptionItem("Cerrar sesión") {
-                navController.navigate("login") {
-                    popUpTo("home") { inclusive = true }
-                }
+
+            // ✅ Ahora navega al diálogo de confirmación
+            OptionItem(stringResource(R.string.profile_cerrar_sesion)) {
+                navController.navigate("logout")
             }
         }
 

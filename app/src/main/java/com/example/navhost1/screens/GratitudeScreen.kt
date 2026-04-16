@@ -7,9 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun GratitudeScreen(navController: NavController) {
@@ -28,35 +30,35 @@ fun GratitudeScreen(navController: NavController) {
         Text("←", fontSize = 22.sp,
             modifier = Modifier.clickable { navController.popBackStack() })
 
-        Text("Diario de Gratitud 🙏", fontSize = 22.sp)
+        Text(stringResource(R.string.tools_gratitud_titulo), fontSize = 22.sp)
 
         Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedTextField(
             value = text1,
             onValueChange = { text1 = it },
-            label = { Text("Persona") },
+            label = { Text(stringResource(R.string.gratitude_persona)) },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = text2,
             onValueChange = { text2 = it },
-            label = { Text("Lugar") },
+            label = { Text(stringResource(R.string.gratitude_lugar)) },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = text3,
             onValueChange = { text3 = it },
-            label = { Text("Aprendizaje") },
+            label = { Text(stringResource(R.string.gratitude_aprendizaje)) },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(onClick = { }) {
-            Text("Guardar")
+            Text(stringResource(R.string.gratitude_guardar))
         }
     }
 }

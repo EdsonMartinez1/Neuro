@@ -1,5 +1,6 @@
 package com.example.navhost1
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.navhost1.navigation.NavGraph
 import com.example.navhost1.screens.DrawerMenu
+import com.example.navhost1.utils.LocaleHelper
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -19,27 +21,28 @@ import androidx.compose.material.icons.filled.Menu
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
 
+    // ✅ Se aplica el idioma guardado ANTES de que se infle cualquier vista
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.applyCurrentLanguage(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
-
             val navController = rememberNavController()
-            val drawerState = rememberDrawerState(DrawerValue.Closed)
-            val scope = rememberCoroutineScope()
+            val drawerState   = rememberDrawerState(DrawerValue.Closed)
+            val scope         = rememberCoroutineScope()
 
-            // Detectar pantalla actual
             val currentRoute = navController
                 .currentBackStackEntryAsState().value?.destination?.route
 
-            if (currentRoute == "login") {
+            // Pantallas que NO muestran drawer ni topBar
+            val hideDrawer = listOf("login", "splash", "onboarding")
+                .any { currentRoute?.startsWith(it) == true }
 
-                // ❌ SIN menú en login
+            if (hideDrawer) {
                 NavGraph(navController)
-
             } else {
-
-                // ✅ CON menú en el resto
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
@@ -50,16 +53,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) {
-
                     Scaffold(
                         topBar = {
                             TopAppBar(
-                                title = { Text("Mi App") },
+                                title = { Text("NeuraBloom") },
                                 navigationIcon = {
                                     IconButton(onClick = {
-                                        scope.launch {
-                                            drawerState.open()
-                                        }
+                                        scope.launch { drawerState.open() }
                                     }) {
                                         Icon(
                                             imageVector = Icons.Default.Menu,
@@ -70,11 +70,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     ) { padding ->
-
                         Box(modifier = Modifier.padding(padding)) {
                             NavGraph(navController)
                         }
-
                     }
                 }
             }

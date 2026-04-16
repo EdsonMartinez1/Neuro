@@ -8,9 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun SelfEsteemScreen(navController: NavController) {
@@ -27,14 +29,14 @@ fun SelfEsteemScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Autoestima 💜", fontSize = 24.sp)
+        Text(stringResource(R.string.self_titulo), fontSize = 24.sp)
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        SelfItem("Soy suficiente")
-        SelfItem("Estoy creciendo")
-        SelfItem("Confío en mí")
-        SelfItem("Merezco cosas buenas")
+        SelfItem(stringResource(R.string.self_op_1))
+        SelfItem(stringResource(R.string.self_op_2))
+        SelfItem(stringResource(R.string.self_op_3))
+        SelfItem(stringResource(R.string.self_op_4))
     }
 }
 

@@ -16,11 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val Yellow       = Color(0xFFFDD835)
@@ -29,24 +31,26 @@ private val Purple       = Color(0xFF7B2FBE)
 private val TextOnYellow = Color(0xFF1A1A1A)
 private val White        = Color.White
 
-private val premiumPerks = listOf(
-    "Acceso ilimitado a herramientas",
-    "Meditación guiada",
-    "Seguimiento avanzado",
-    "Contenido exclusivo",
-)
-
-private val freePerks = listOf(
-    "Herramientas básicas",
-    "Diario emocional",
-    "Contenido limitado",
-    "Soporte estándar",
-)
 
 // ── Pantalla ──────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanesScreen(navController: NavController) {
+
+    val premiumPerks = listOf(
+        stringResource(R.string.planes_premium_funciones_1),
+        stringResource(R.string.planes_premium_funciones_2),
+        stringResource(R.string.planes_premium_funciones_3),
+        stringResource(R.string.planes_premium_funciones_4),
+    )
+
+    val freePerks = listOf(
+        stringResource(R.string.planes_freemium_funciones_1),
+        stringResource(R.string.planes_freemium_funciones_2),
+        stringResource(R.string.planes_freemium_funciones_3),
+        stringResource(R.string.planes_freemium_funciones_4),
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -106,14 +110,14 @@ fun PlanesScreen(navController: NavController) {
             }
 
             Text(
-                text = "PREMIUM",
+                text = stringResource(R.string.planes_titulo_premium),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = TextOnYellow,
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Desbloquea todas las funciones",
+                text = stringResource(R.string.planes_subtitulo_premium),
                 fontSize = 13.sp,
                 color = TextOnYellow,
                 textAlign = TextAlign.Center,
@@ -140,7 +144,7 @@ fun PlanesScreen(navController: NavController) {
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = "Suscribirse",
+                    text = stringResource(R.string.planes_boton_suscribirse),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = YellowDark
@@ -186,14 +190,14 @@ fun PlanesScreen(navController: NavController) {
             }
 
             Text(
-                text = "FREEMIUM",
+                text = stringResource(R.string.planes_titulo_free),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = TextOnYellow,
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Funciones gratuitas",
+                text = stringResource(R.string.planes_subtitulo_free),
                 fontSize = 13.sp,
                 color = TextOnYellow,
                 textAlign = TextAlign.Center,

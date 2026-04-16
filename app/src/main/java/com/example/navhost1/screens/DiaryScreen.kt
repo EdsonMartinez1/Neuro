@@ -9,9 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun DiaryScreen(navController: NavController) {
@@ -50,7 +52,7 @@ fun DiaryScreen(navController: NavController) {
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = "Mi Diario",
+                    text = stringResource(R.string.diario_titulo),
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -61,7 +63,7 @@ fun DiaryScreen(navController: NavController) {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                placeholder = { Text("¿Cómo te sientes hoy?") },
+                placeholder = { Text(stringResource(R.string.diario_subtitulo)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -87,7 +89,7 @@ fun DiaryScreen(navController: NavController) {
                     containerColor = Color(0xFF9575CD)
                 )
             ) {
-                Text("Guardar entrada")
+                Text(stringResource(R.string.diario_guardar))
             }
         }
     }

@@ -27,12 +27,12 @@ fun DrawerMenu(navController: NavController, closeDrawer: () -> Unit) {
         }
 
         DrawerItem("Home") {
-            navController.navigate("home/test")
+            navController.navigate("home")
             closeDrawer()
         }
 
         DrawerItem("Profile") {
-            navController.navigate("profile/test")
+            navController.navigate("profile")
             closeDrawer()
         }
 
@@ -41,12 +41,16 @@ fun DrawerMenu(navController: NavController, closeDrawer: () -> Unit) {
             closeDrawer()
         }
 
-        DrawerItem("Logout") {
-            navController.navigate("login") {
-                popUpTo("login") { inclusive = true }
-            }
+        DrawerItem("Language") {
+            navController.navigate("language")
             closeDrawer()
         }
+
+        DrawerItem("Logout") {
+            navController.navigate("logout")
+            closeDrawer()
+        }
+
     }
 }
 

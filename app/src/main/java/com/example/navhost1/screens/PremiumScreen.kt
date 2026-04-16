@@ -16,11 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val Yellow      = Color(0xFFFDD835)
@@ -29,17 +31,20 @@ private val TextOnYellow = Color(0xFF1A1A1A)
 private val White       = Color.White
 private val StarWhite   = Color.White
 
-private val premiumFeatures = listOf(
-    "Acceso ilimitado a todas las herramientas",
-    "Sesiones de meditación guiada",
-    "Seguimiento emocional avanzado",
-    "Contenido exclusivo premium",
-)
+
 
 // ── Pantalla ──────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PremiumScreen(navController: NavController) {
+
+    val premiumFeatures = listOf(
+        stringResource(R.string.plan_actual_funciones_1),
+        stringResource(R.string.plan_actual_funciones_2),
+        stringResource(R.string.plan_actual_funciones_3),
+        stringResource(R.string.plan_actual_funciones_4),
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,14 +103,14 @@ fun PremiumScreen(navController: NavController) {
 
             // ── Título ────────────────────────────────────────────────────────
             Text(
-                text = "PREMIUM",
+                text = stringResource(R.string.plan_actual_titulo),
                 fontSize = 26.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = TextOnYellow,
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Desbloquea todas las funciones",
+                text = stringResource(R.string.plan_actual_subtitulo),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 color = TextOnYellow,
@@ -135,7 +140,7 @@ fun PremiumScreen(navController: NavController) {
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = "Suscribirse",
+                    text = stringResource(R.string.plan_actual_suscribirse),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = YellowDark
@@ -147,7 +152,7 @@ fun PremiumScreen(navController: NavController) {
             // ── Enlace comparar planes ────────────────────────────────────────
             TextButton(onClick = { navController.navigate("planes") }) {
                 Text(
-                    text = "Ver comparación de planes",
+                    text = stringResource(R.string.plan_actual_comparar),
                     color = TextOnYellow,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium

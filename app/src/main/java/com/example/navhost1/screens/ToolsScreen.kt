@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 @Composable
 fun ToolsScreen(navController: NavController) {
@@ -44,7 +46,7 @@ fun ToolsScreen(navController: NavController) {
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = "Herramientas de Bienestar",
+                text = stringResource(R.string.tools_titulo),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -61,11 +63,11 @@ fun ToolsScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
-                ToolCard("Respiración", Color(0xFF42A5F5)) {
+                ToolCard(stringResource(R.string.tools_respiracion_titulo), Color(0xFF42A5F5)) {
                     navController.navigate("breathing")
                 }
 
-                ToolCard("Meditación", Color(0xFFAB47BC)) {
+                ToolCard(stringResource(R.string.tools_meditacion_titulo), Color(0xFFAB47BC)) {
                     navController.navigate("meditation")
                 }
             }
@@ -77,11 +79,11 @@ fun ToolsScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
-                ToolCard("Ansiedad", Color(0xFF66BB6A)) {
+                ToolCard(stringResource(R.string.tools_ansiedad_titulo), Color(0xFF66BB6A)) {
                     navController.navigate("anxiety")
                 }
 
-                ToolCard("Gratitud", Color(0xFFFF8A65)) {
+                ToolCard(stringResource(R.string.tools_gratitud_titulo), Color(0xFFFF8A65)) {
                     navController.navigate("gratitude")
                 }
             }
@@ -93,7 +95,7 @@ fun ToolsScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                ToolCard("Autoestima", Color(0xFFEC407A)) {
+                ToolCard(stringResource(R.string.tools_autoestima_titulo), Color(0xFFEC407A)) {
                     navController.navigate("selfesteem")
                 }
             }

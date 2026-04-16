@@ -17,10 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.navhost1.R
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 private val PurpleBar = Color(0xFF7B2FBE)
@@ -32,43 +34,40 @@ private val TextBody  = Color(0xFF424242)
 
 data class FaqItem(val question: String, val answer: String)
 
-private val faqList = listOf(
-    FaqItem(
-        question = "¿Cómo funciona la app?",
-        answer   = "Neuro es una app de bienestar mental que te ofrece herramientas " +
-                "como meditación, respiración, diario emocional y chat de apoyo."
-    ),
-    FaqItem(
-        question = "¿Mis datos están seguros?",
-        answer   = "Sí. Toda tu información es confidencial y está protegida. " +
-                "Consulta nuestra política de privacidad para más detalles."
-    ),
-    FaqItem(
-        question = "¿Qué incluye el plan Premium?",
-        answer   = "El plan Premium desbloquea todas las herramientas, sesiones " +
-                "guiadas ilimitadas, contenido exclusivo y seguimiento avanzado."
-    ),
-    FaqItem(
-        question = "¿Puedo cancelar mi suscripción?",
-        answer   = "Sí, puedes cancelar en cualquier momento desde tu perfil " +
-                "en la sección de Plan actual."
-    ),
-    FaqItem(
-        question = "¿La app reemplaza a un profesional?",
-        answer   = "No. Neuro es un apoyo complementario. Si necesitas ayuda " +
-                "urgente, usa el botón de Emergencias en tu perfil."
-    ),
-    FaqItem(
-        question = "¿Cómo contacto a soporte?",
-        answer   = "Ve a Perfil → Soporte → Contacto a soporte y envíanos " +
-                "un mensaje. Te responderemos lo antes posible."
-    ),
-)
+
 
 // ── Pantalla ──────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaqScreen(navController: NavController) {
+
+    val faqList = listOf(
+        FaqItem(
+            question = stringResource(R.string.faq_pregunta_1),
+            answer   = stringResource(R.string.faq_respuesta_1)
+        ),
+        FaqItem(
+            question = stringResource(R.string.faq_pregunta_2),
+            answer   = stringResource(R.string.faq_respuesta_2)
+        ),
+        FaqItem(
+            question = stringResource(R.string.faq_pregunta_3),
+            answer   = stringResource(R.string.faq_respuesta_3)
+        ),
+        FaqItem(
+            question = stringResource(R.string.faq_pregunta_4),
+            answer   = stringResource(R.string.faq_respuesta_4)
+        ),
+        FaqItem(
+            question = stringResource(R.string.faq_pregunta_5),
+            answer   = stringResource(R.string.faq_respuesta_5)
+        ),
+        FaqItem(
+            question = stringResource(R.string.faq_pregunta_6),
+            answer   = stringResource(R.string.faq_respuesta_6)
+        ),
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
