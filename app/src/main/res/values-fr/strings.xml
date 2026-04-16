@@ -63,6 +63,7 @@
     <string name="emergency_subtitulo">Lignes d\'aide disponibles 24h/24 7j/7</string>
     <string name="emergency_linea_crisis">Ligne de crise</string>
     <string name="emergency_emergencia">Urgence</string>
+    <string name="emergency_ayuda_profesional">Aide professionnelle</string>
 
     <!-- PLANES -->
     <string name="planes_titulo_premium">PREMIUM</string>

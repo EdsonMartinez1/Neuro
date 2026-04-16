@@ -63,6 +63,7 @@
     <string name="emergency_subtitulo">Help lines available 24/7</string>
     <string name="emergency_linea_crisis">Crisis line</string>
     <string name="emergency_emergencia">Emergency</string>
+    <string name="emergency_ayuda_profesional">Professional help</string>
 
     <!-- PLANES -->
     <string name="planes_titulo_premium">PREMIUM</string>

@@ -60,8 +60,9 @@
     <!-- EMERGENCIAS -->
     <string name="emergency_titulo">Emergencias</string>
     <string name="emergency_subtitulo">Líneas de ayuda disponibles 24/7</string>
-    <string name="emergency_linea_crisis">Línea de crisis</string>
-    <string name="emergency_emergencia">Emergencia</string>
+    <string name="emergency_linea_crisis">Línea de crisis SAPTEL</string>
+    <string name="emergency_emergencia">Emergencia 911</string>
+    <string name="emergency_ayuda_profesional">Ayuda profesional</string>
 
     <!-- PLANES -->
     <string name="planes_titulo_premium">PREMIUM</string>
