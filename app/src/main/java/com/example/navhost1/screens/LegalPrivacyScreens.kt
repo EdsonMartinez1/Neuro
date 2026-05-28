@@ -1,14 +1,21 @@
 package com.example.navhost1.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -17,125 +24,212 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 
-// ── Paleta compartida ─────────────────────────────────────────────────────────
-private val PurpleBar = Color(0xFF7B2FBE)
-private val BgLegal   = Color(0xFFEDE7F6)
-private val TextBody  = Color(0xFF424242)
-private val TextDark  = Color(0xFF212121)
+private val BackgroundTop = Color(0xFF0F172A)
+private val BackgroundBottom = Color(0xFF1E293B)
 
-// ── Componente base reutilizable ──────────────────────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
+private val Primary = Color(0xFF8B5CF6)
+private val PrimaryLight = Color(0xFFA78BFA)
+
+private val CardColor = Color(0xFF111827)
+
+private val WhiteSoft = Color(0xFFF8FAFC)
+private val GrayText = Color(0xFFCBD5E1)
+
 @Composable
 private fun PolicyScreen(
     navController: NavController,
     title: String,
     sections: List<Pair<String, String>>,
-    charCount: Int
+    iconType: String
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = title,
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        BackgroundTop,
+                        BackgroundBottom
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Regresar",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PurpleBar
                 )
             )
-        },
-        containerColor = BgLegal
-    ) { padding ->
+    ) {
 
         Box(
             modifier = Modifier
+                .size(320.dp)
+                .offset(x = (-90).dp, y = (-60).dp)
+                .clip(CircleShape)
+                .background(
+                    Primary.copy(alpha = 0.12f)
+                )
+        )
+
+        Column(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                sections.forEach { (heading, body) ->
-                    if (heading.isNotEmpty()) {
-                        Text(
-                            text = heading,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextDark,
-                            modifier = Modifier.padding(bottom = 6.dp)
-                        )
+
+                IconButton(
+                    onClick = {
+                        navController.popBackStack()
                     }
-                    Text(
-                        text = body,
-                        fontSize = 14.sp,
-                        color = TextBody,
-                        lineHeight = 22.sp,
-                        modifier = Modifier.padding(bottom = 20.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = null,
+                        tint = WhiteSoft
                     )
                 }
-                Spacer(modifier = Modifier.height(48.dp))
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    Primary,
+                                    PrimaryLight
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Icon(
+                        imageVector =
+                            if (iconType == "legal")
+                                Icons.Default.Gavel
+                            else
+                                Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
+
+                    Text(
+                        text = title,
+                        color = WhiteSoft,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Text(
+                        text =
+                            if (iconType == "legal")
+                                "Información legal y términos"
+                            else
+                                "Protección y privacidad de datos",
+                        color = GrayText,
+                        fontSize = 13.sp
+                    )
+                }
             }
 
-            Text(
-                text = "$charCount",
-                fontSize = 12.sp,
-                color = Color(0xFF9E9E9E),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 12.dp)
-            )
+            Spacer(modifier = Modifier.height(34.dp))
+
+            sections.forEach { (heading, body) ->
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(26.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = CardColor.copy(alpha = 0.96f)
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(22.dp)
+                    ) {
+
+                        if (heading.isNotEmpty()) {
+
+                            Text(
+                                text = heading,
+                                color = WhiteSoft,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(modifier = Modifier.height(14.dp))
+                        }
+
+                        Text(
+                            text = body,
+                            color = GrayText,
+                            fontSize = 14.sp,
+                            lineHeight = 24.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
         }
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  PANTALLA LEGAL
-// ══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun LegalScreen(navController: NavController) {
+
     PolicyScreen(
         navController = navController,
         title = stringResource(R.string.legal_titulo),
-        charCount = 110,
+        iconType = "legal",
         sections = listOf(
             "" to stringResource(R.string.legal_subtitulo),
-            stringResource(R.string.legal_terminos)        to stringResource(R.string.legal_terminos_subtitulo),
-            stringResource(R.string.legal_responsabilidad) to stringResource(R.string.legal_responsabilidad_subtitulo),
-            stringResource(R.string.legal_modificaciones)  to stringResource(R.string.legal_modificaciones_subtitulo)
+
+            stringResource(R.string.legal_terminos) to
+                    stringResource(R.string.legal_terminos_subtitulo),
+
+            stringResource(R.string.legal_responsabilidad) to
+                    stringResource(R.string.legal_responsabilidad_subtitulo),
+
+            stringResource(R.string.legal_modificaciones) to
+                    stringResource(R.string.legal_modificaciones_subtitulo)
         )
     )
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  PANTALLA PRIVACIDAD
-// ══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun PrivacyScreen(navController: NavController) {
+
     PolicyScreen(
         navController = navController,
         title = stringResource(R.string.privacidad_titulo),
-        charCount = 98,
+        iconType = "privacy",
         sections = listOf(
-            ""                                           to stringResource(R.string.privacidad_subtitulo),
-            stringResource(R.string.privacidad_datos)    to stringResource(R.string.privacidad_datos_subtitulo),
-            stringResource(R.string.privacidad_uso)      to stringResource(R.string.privacidad_uso_subtitulo),
-            stringResource(R.string.privacidad_derechos) to stringResource(R.string.privacidad_derechos_subtitulo)
+            "" to stringResource(R.string.privacidad_subtitulo),
+
+            stringResource(R.string.privacidad_datos) to
+                    stringResource(R.string.privacidad_datos_subtitulo),
+
+            stringResource(R.string.privacidad_uso) to
+                    stringResource(R.string.privacidad_uso_subtitulo),
+
+            stringResource(R.string.privacidad_derechos) to
+                    stringResource(R.string.privacidad_derechos_subtitulo)
         )
     )
 }

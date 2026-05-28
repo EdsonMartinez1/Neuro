@@ -1,44 +1,46 @@
 package com.example.navhost1.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
+import androidx.compose.ui.res.stringResource
 
-// ── Paleta ────────────────────────────────────────────────────────────────────
-private val BgScreen   = Color(0xFFF5F5F5)
-private val BgIconBox  = Color(0xFFEDE7F6)
-private val BlueIcon   = Color(0xFF42A5F5)
-private val Magenta    = Color(0xFFCC00AA)
-private val BgField    = Color(0xFFE0E0E0)
-private val TextHint   = Color(0xFF9E9E9E)
-private val TextDark   = Color(0xFF212121)
-private val BgResponse = Color(0xFFFFFFFF)
-private val BorderGray = Color(0xFFBDBDBD)
+private val BackgroundTop = Color(0xFF0F172A)
+private val BackgroundBottom = Color(0xFF1E293B)
 
+private val Primary = Color(0xFF8B5CF6)
+private val PrimaryLight = Color(0xFFA78BFA)
 
+private val CardColor = Color(0xFF111827)
+private val FieldColor = Color(0xFF1F2937)
 
-// ── Pantalla ──────────────────────────────────────────────────────────────────
+private val WhiteSoft = Color(0xFFF8FAFC)
+private val GrayText = Color(0xFFCBD5E1)
+private val BorderColor = Color(0xFF334155)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactScreen(navController: NavController) {
@@ -51,222 +53,328 @@ fun ContactScreen(navController: NavController) {
         stringResource(R.string.contact_problema_4)
     )
 
-    var selectedProblem by remember { mutableStateOf(problemOptions[0]) }
-    var expanded        by remember { mutableStateOf(false) }
-    var messageText     by remember { mutableStateOf("") }
-    var submitted       by remember { mutableStateOf(false) }
+    var selectedProblem by remember {
+        mutableStateOf(problemOptions[0])
+    }
 
-    // Respuestas de ejemplo (se reemplazarán con BD real)
-    val responses = listOf<Pair<String, String>>() // vacío hasta que haya BD
+    var expanded by remember {
+        mutableStateOf(false)
+    }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Regresar",
-                            tint = Magenta
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BgScreen
+    var messageText by remember {
+        mutableStateOf("")
+    }
+
+    var submitted by remember {
+        mutableStateOf(false)
+    }
+
+    val responses = listOf<Pair<String, String>>()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        BackgroundTop,
+                        BackgroundBottom
+                    )
                 )
             )
-        },
-        containerColor = BgScreen
-    ) { padding ->
+    ) {
+
+        Box(
+            modifier = Modifier
+                .size(320.dp)
+                .offset(x = (-90).dp, y = (-60).dp)
+                .clip(CircleShape)
+                .background(
+                    Primary.copy(alpha = 0.12f)
+                )
+        )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
 
-            // ── Ícono de sobre ────────────────────────────────────────────────
+            Spacer(modifier = Modifier.height(10.dp))
+
+            IconButton(
+                onClick = {
+                    navController.popBackStack()
+                }
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = null,
+                    tint = WhiteSoft
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             Box(
                 modifier = Modifier
                     .size(90.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(BgIconBox),
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                Primary,
+                                PrimaryLight
+                            )
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
+
                 Icon(
-                    imageVector = Icons.Default.Email,
+                    imageVector = Icons.Default.SupportAgent,
                     contentDescription = null,
-                    tint = BlueIcon,
-                    modifier = Modifier.size(52.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(42.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ── Título ────────────────────────────────────────────────────────
-            Text(
-                text = stringResource(R.string.contact_titulo),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextDark,
-                textAlign = TextAlign.Center
-            )
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Dropdown Problema ─────────────────────────────────────────────
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = selectedProblem,
-                    onValueChange = { },
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            tint = TextDark
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = BgField,
-                        focusedContainerColor   = BgField,
-                        unfocusedBorderColor    = Color.Transparent,
-                        focusedBorderColor      = Magenta
-                    )
+            Text(
+                text = stringResource(R.string.contact_titulo),
+                color = WhiteSoft,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Nuestro equipo está listo para ayudarte con cualquier inconveniente.",
+                color = GrayText,
+                fontSize = 15.sp,
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(34.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = CardColor.copy(alpha = 0.96f)
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(22.dp)
                 ) {
-                    problemOptions.drop(1).forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option) },
-                            onClick = {
-                                selectedProblem = option
-                                expanded = false
-                            }
+
+                    Text(
+                        text = "Selecciona un problema",
+                        color = WhiteSoft,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = {
+                            expanded = !expanded
+                        }
+                    ) {
+
+                        OutlinedTextField(
+                            value = selectedProblem,
+                            onValueChange = { },
+                            readOnly = true,
+                            trailingIcon = {
+
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = GrayText
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = FieldColor,
+                                unfocusedContainerColor = FieldColor,
+
+                                focusedBorderColor = Primary,
+                                unfocusedBorderColor = BorderColor,
+
+                                focusedTextColor = WhiteSoft,
+                                unfocusedTextColor = WhiteSoft
+                            )
                         )
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = {
+                                expanded = false
+                            },
+                            containerColor = CardColor
+                        ) {
+
+                            problemOptions.drop(1).forEach { option ->
+
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = option,
+                                            color = WhiteSoft
+                                        )
+                                    },
+                                    onClick = {
+                                        selectedProblem = option
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    OutlinedTextField(
+                        value = messageText,
+                        onValueChange = {
+                            messageText = it
+                        },
+                        placeholder = {
+
+                            Text(
+                                text = stringResource(R.string.contact_area_texto),
+                                color = GrayText
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = FieldColor,
+                            unfocusedContainerColor = FieldColor,
+
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = BorderColor,
+
+                            focusedTextColor = WhiteSoft,
+                            unfocusedTextColor = WhiteSoft,
+
+                            cursorColor = Primary
+                        ),
+                        maxLines = 6
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+
+                            if (messageText.isNotBlank()) {
+
+                                submitted = true
+                                messageText = ""
+                                selectedProblem = problemOptions[0]
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Primary
+                        )
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = null
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Text(
+                            text = stringResource(R.string.contact_boton_enviar),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    AnimatedVisibility(submitted) {
+
+                        Column {
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = stringResource(R.string.contact_confirmacion_envio),
+                                color = Color(0xFF4ADE80),
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ── Área de texto ─────────────────────────────────────────────────
-            OutlinedTextField(
-                value = messageText,
-                onValueChange = { messageText = it },
-                placeholder = {
-                    Text(
-                        text = stringResource(R.string.contact_area_texto),
-                        color = TextHint,
-                        fontSize = 14.sp
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = BgField,
-                    focusedContainerColor   = BgField,
-                    unfocusedBorderColor    = Color.Transparent,
-                    focusedBorderColor      = Magenta
-                ),
-                maxLines = 6
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // ── Botón Enviar ──────────────────────────────────────────────────
-            Button(
-                onClick = {
-                    if (messageText.isNotBlank()) {
-                        submitted = true
-                        messageText = ""
-                        selectedProblem = problemOptions[0]
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Magenta,
-                    contentColor   = Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.contact_boton_enviar),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            // ── Confirmación de envío ─────────────────────────────────────────
-            if (submitted) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.contact_confirmacion_envio),
-                    color = Color(0xFF388E3C),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // ── Sección de respuestas ─────────────────────────────────────────
-            HorizontalDivider(color = BorderGray)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(34.dp))
 
             Text(
                 text = stringResource(R.string.contact_respuestas_soporte_titulo),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextDark,
-                modifier = Modifier.fillMaxWidth()
+                color = WhiteSoft,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             if (responses.isEmpty()) {
-                // Estado vacío
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(BgResponse)
-                        .border(1.dp, BorderGray, RoundedCornerShape(12.dp))
-                        .padding(24.dp),
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(CardColor.copy(alpha = 0.96f))
+                        .border(
+                            1.dp,
+                            BorderColor,
+                            RoundedCornerShape(24.dp)
+                        )
+                        .padding(28.dp),
                     contentAlignment = Alignment.Center
                 ) {
+
                     Text(
                         text = stringResource(R.string.contact_respuestas_soporte),
-                        color = TextHint,
-                        fontSize = 13.sp,
+                        color = GrayText,
+                        fontSize = 14.sp,
                         textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
+                        lineHeight = 22.sp
                     )
                 }
+
             } else {
-                // Lista de respuestas (se llenará con BD real)
+
                 responses.forEach { (fecha, mensaje) ->
-                    ResponseCard(fecha = fecha, mensaje = mensaje)
-                    Spacer(modifier = Modifier.height(10.dp))
+
+                    ResponseCard(
+                        fecha = fecha,
+                        mensaje = mensaje
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
             }
 
@@ -275,19 +383,38 @@ fun ContactScreen(navController: NavController) {
     }
 }
 
-// ── Tarjeta de respuesta ──────────────────────────────────────────────────────
 @Composable
-private fun ResponseCard(fecha: String, mensaje: String) {
+private fun ResponseCard(
+    fecha: String,
+    mensaje: String
+) {
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BgResponse)
-            .border(1.dp, BorderGray, RoundedCornerShape(12.dp))
-            .padding(16.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(CardColor.copy(alpha = 0.96f))
+            .border(
+                1.dp,
+                BorderColor,
+                RoundedCornerShape(24.dp)
+            )
+            .padding(20.dp)
     ) {
-        Text(text = fecha, fontSize = 11.sp, color = TextHint)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = mensaje, fontSize = 14.sp, color = TextDark, lineHeight = 20.sp)
+
+        Text(
+            text = fecha,
+            fontSize = 12.sp,
+            color = GrayText
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = mensaje,
+            fontSize = 15.sp,
+            color = WhiteSoft,
+            lineHeight = 24.sp
+        )
     }
 }

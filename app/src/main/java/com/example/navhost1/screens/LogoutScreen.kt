@@ -1,5 +1,6 @@
 package com.example.navhost1.screens
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,9 +9,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -18,123 +22,170 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-// ── Paleta ────────────────────────────────────────────────────────────────────
-private val RedMain    = Color(0xFFE53935)
-private val RedLight   = Color(0xFFFFEBEE)
-private val TextDark   = Color(0xFF1A1A1A)
-private val TextSub    = Color(0xFF757575)
-private val BgDialog   = Color(0xFFFFFFFF)
+private val BackgroundDark = Color(0xCC0F172A)
 
-// ── Pantalla completa que actúa como diálogo ──────────────────────────────────
+private val Danger = Color(0xFFEF4444)
+private val DangerLight = Color(0xFFF87171)
+
+private val CardColor = Color(0xFF111827)
+
+private val WhiteSoft = Color(0xFFF8FAFC)
+private val GrayText = Color(0xFFCBD5E1)
+
 @Composable
 fun LogoutScreen(navController: NavController) {
 
-    // Fondo semitransparente
+    val infiniteTransition = rememberInfiniteTransition(label = "logout")
+
+    val alphaAnim by infiniteTransition.animateFloat(
+        initialValue = 0.08f,
+        targetValue = 0.18f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f)),
+            .background(BackgroundDark),
         contentAlignment = Alignment.Center
     ) {
-        // Tarjeta central
+
+        Box(
+            modifier = Modifier
+                .size(280.dp)
+                .alpha(alphaAnim)
+                .clip(CircleShape)
+                .background(Danger)
+        )
+
         Card(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth(0.88f)
                 .wrapContentHeight(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = BgDialog),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            shape = RoundedCornerShape(34.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = CardColor
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 10.dp
+            )
         ) {
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 28.dp, vertical = 32.dp),
+                    .padding(
+                        horizontal = 28.dp,
+                        vertical = 34.dp
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // ── Ícono ─────────────────────────────────────────────────────
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
+                        .size(90.dp)
                         .clip(CircleShape)
-                        .background(RedMain),
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    Danger,
+                                    DangerLight
+                                )
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
+
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(42.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // ── Título ────────────────────────────────────────────────────
                 Text(
-                    text       = "Cerrar sesión",
-                    fontSize   = 20.sp,
+                    text = "Cerrar sesión",
+                    color = WhiteSoft,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color      = TextDark,
-                    textAlign  = TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // ── Mensaje ───────────────────────────────────────────────────
                 Text(
-                    text      = "¿Estás seguro que deseas salir?",
-                    fontSize  = 14.sp,
-                    color     = TextSub,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
+                    text = "¿Estás seguro que deseas salir de tu cuenta?",
+                    color = GrayText,
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(34.dp))
 
-                // ── Botones ───────────────────────────────────────────────────
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Cancelar
+
                     OutlinedButton(
-                        onClick = { navController.popBackStack() },
+                        onClick = {
+                            navController.popBackStack()
+                        },
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(24.dp),
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = TextDark
+                            contentColor = WhiteSoft
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.16f),
+                                    Color.White.copy(alpha = 0.06f)
+                                )
+                            )
                         )
                     ) {
+
                         Text(
-                            text       = "Cancelar",
-                            fontSize   = 15.sp,
+                            text = "Cancelar",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
 
-                    // Salir
                     Button(
                         onClick = {
+
                             navController.navigate("login") {
-                                popUpTo(0) { inclusive = true }
+
+                                popUpTo(0) {
+                                    inclusive = true
+                                }
                             }
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(24.dp),
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = RedMain,
-                            contentColor   = Color.White
+                            containerColor = Danger
                         )
                     ) {
+
                         Text(
-                            text       = "Salir",
-                            fontSize   = 15.sp,
-                            fontWeight = FontWeight.SemiBold
+                            text = "Salir",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

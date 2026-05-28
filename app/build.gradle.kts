@@ -5,9 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.navhost1"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.navhost1"
@@ -38,8 +36,8 @@ android {
 }
 
 dependencies {
-
-    val nav_version = "2.9.7"
+    implementation(libs.androidx.material3)
+    val nav_version = "2.8.2"
 
     implementation("androidx.navigation:navigation-compose:$nav_version")
 
@@ -51,6 +49,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    
+    // Add Material Icons dependencies
+    implementation(libs.androidx.compose.material.icons.core)
+    implementation(libs.androidx.compose.material.icons.extended)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

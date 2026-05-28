@@ -1,5 +1,6 @@
 package com.example.navhost1.screens
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,12 +10,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,17 +28,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 
-// ── Paleta ────────────────────────────────────────────────────────────────────
-private val Yellow      = Color(0xFFFDD835)
-private val YellowDark  = Color(0xFFF9A825)
-private val TextOnYellow = Color(0xFF1A1A1A)
-private val White       = Color.White
-private val StarWhite   = Color.White
+private val BackgroundTop = Color(0xFF0F172A)
+private val BackgroundBottom = Color(0xFF1E293B)
 
+private val PremiumGold = Color(0xFFF59E0B)
+private val PremiumLight = Color(0xFFFCD34D)
 
+private val CardColor = Color(0xFF111827)
 
-// ── Pantalla ──────────────────────────────────────────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
+private val WhiteSoft = Color(0xFFF8FAFC)
+private val GrayText = Color(0xFFCBD5E1)
+
 @Composable
 fun PremiumScreen(navController: NavController) {
 
@@ -45,154 +49,216 @@ fun PremiumScreen(navController: NavController) {
         stringResource(R.string.plan_actual_funciones_4),
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Regresar",
-                            tint = TextOnYellow
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Yellow
+    val infiniteTransition = rememberInfiniteTransition(label = "premium")
+
+    val alphaAnim by infiniteTransition.animateFloat(
+        initialValue = 0.08f,
+        targetValue = 0.18f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        BackgroundTop,
+                        BackgroundBottom
+                    )
                 )
             )
-        },
-        containerColor = Yellow
-    ) { padding ->
+    ) {
+
+        Box(
+            modifier = Modifier
+                .size(340.dp)
+                .offset(x = (-90).dp, y = (-60).dp)
+                .clip(CircleShape)
+                .background(
+                    PremiumGold.copy(alpha = alphaAnim)
+                )
+        )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // ── Estrella con badge ────────────────────────────────────────────
-            Box(contentAlignment = Alignment.TopEnd) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = null,
-                    tint = StarWhite,
-                    modifier = Modifier.size(140.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(White),
-                    contentAlignment = Alignment.Center
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                IconButton(
+                    onClick = {
+                        navController.popBackStack()
+                    }
                 ) {
+
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Icons.Default.ArrowBack,
                         contentDescription = null,
-                        tint = YellowDark,
-                        modifier = Modifier.size(18.dp)
+                        tint = WhiteSoft
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-            // ── Título ────────────────────────────────────────────────────────
-            Text(
-                text = stringResource(R.string.plan_actual_titulo),
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = TextOnYellow,
-                letterSpacing = 2.sp
-            )
-            Text(
-                text = stringResource(R.string.plan_actual_subtitulo),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextOnYellow,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(130.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                PremiumGold,
+                                PremiumLight
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
 
-            // ── Lista de funciones ────────────────────────────────────────────
-            premiumFeatures.forEach { feature ->
-                FeatureRow(text = feature, tintColor = White)
-                Spacer(modifier = Modifier.height(12.dp))
+                Icon(
+                    imageVector = Icons.Default.Diamond,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(68.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-            // ── Botón Suscribirse ─────────────────────────────────────────────
+            Text(
+                text = stringResource(R.string.plan_actual_titulo),
+                color = WhiteSoft,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = stringResource(R.string.plan_actual_subtitulo),
+                color = GrayText,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 24.sp
+            )
+
+            Spacer(modifier = Modifier.height(34.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(32.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = CardColor.copy(alpha = 0.96f)
+                )
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(24.dp)
+                ) {
+
+                    premiumFeatures.forEach { feature ->
+
+                        PremiumFeatureRow(
+                            text = feature
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             Button(
                 onClick = { },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(28.dp),
+                    .height(58.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = White,
-                    contentColor = YellowDark
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                    containerColor = PremiumGold
+                )
             ) {
+
                 Text(
                     text = stringResource(R.string.plan_actual_suscribirse),
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = YellowDark
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Enlace comparar planes ────────────────────────────────────────
-            TextButton(onClick = { navController.navigate("planes") }) {
+            TextButton(
+                onClick = {
+                    navController.navigate("planes")
+                }
+            ) {
+
                 Text(
                     text = stringResource(R.string.plan_actual_comparar),
-                    color = TextOnYellow,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
+                    color = GrayText,
+                    fontSize = 14.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
 
-// ── Fila de función ───────────────────────────────────────────────────────────
 @Composable
-fun FeatureRow(text: String, tintColor: Color) {
+private fun PremiumFeatureRow(
+    text: String
+) {
+
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = null,
-            tint = tintColor,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
+
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(20.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(tintColor.copy(alpha = 0.35f))
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(
+                    PremiumGold.copy(alpha = 0.14f)
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = text,
-                color = tintColor,
-                fontSize = 13.sp,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(horizontal = 8.dp)
+
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = PremiumGold,
+                modifier = Modifier.size(20.dp)
             )
         }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Text(
+            text = text,
+            color = WhiteSoft,
+            fontSize = 14.sp,
+            lineHeight = 22.sp,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

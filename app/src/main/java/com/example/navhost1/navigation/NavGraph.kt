@@ -11,13 +11,13 @@ fun NavGraph(navController: NavHostController) {
 
     NavHost(
         navController  = navController,
-        startDestination = "splash"        // ✅ Splash como pantalla inicial
+        startDestination = "login"        // ✅ Splash como pantalla inicial
     ) {
 
         // ✨ SPLASH
-        composable("splash") {
-            SplashScreen(navController)
-        }
+        //composable("splash") {
+            //SplashScreen(navController)
+        //}
 
         // 🔐 LOGIN
         composable("login") {

@@ -50,7 +50,7 @@ fun SplashScreen(navController: NavController) {
             animationSpec = tween(durationMillis = 600)
         )
         // Espera 1.5 segundos y navega al login
-        delay(1500)
+        delay(1)
         navController.navigate("login") {
             popUpTo("splash") { inclusive = true }
         }

@@ -1,6 +1,7 @@
 package com.example.navhost1.screens
 
 import android.content.res.Configuration
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,34 +11,43 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
+import androidx.compose.ui.res.stringResource
 
-// ── Paleta ────────────────────────────────────────────────────────────────────
-private val BgDeep   = Color(0xFF0D1B2A)
-private val BgCard   = Color(0xFF1C2D3F)
-private val BgPlayer = Color(0xFF162436)
-private val TextPrim = Color(0xFFFFFFFF)
-private val TextSec  = Color(0xFF8FA8C0)
-private val BarBg    = Color(0xFF243548)
-private val BarFill  = Color(0xFF4A90D9)
+private val BackgroundTop = Color(0xFF0F172A)
+private val BackgroundBottom = Color(0xFF1E293B)
 
-data class ContentItem(val id: Int, val title: String, val duration: String)
+private val Primary = Color(0xFF8B5CF6)
+private val PrimaryLight = Color(0xFFA78BFA)
 
-// ── Pantalla principal ────────────────────────────────────────────────────────
+private val CardColor = Color(0xFF111827)
+private val PlayerColor = Color(0xFF1F2937)
+
+private val WhiteSoft = Color(0xFFF8FAFC)
+private val GrayText = Color(0xFFCBD5E1)
+
+data class ContentItem(
+    val id: Int,
+    val title: String,
+    val duration: String
+)
+
 @Composable
 fun ContentScreen(navController: NavController) {
 
@@ -50,203 +60,365 @@ fun ContentScreen(navController: NavController) {
         ContentItem(6, stringResource(R.string.content_titulo_video_6), "12:00"),
     )
 
-    var progress     by remember { mutableStateOf(0.35f) }
-    var selectedItem by remember { mutableStateOf(sampleItems.first()) }
+    var progress by remember {
+        mutableStateOf(0.35f)
+    }
 
-    // ── Detectar orientación ──────────────────────────────────────────────────
+    var selectedItem by remember {
+        mutableStateOf(sampleItems.first())
+    }
+
     val configuration = LocalConfiguration.current
-    val isLandscape   = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    if (isLandscape) {
-        // ════════════════════════════════════════════════════════════════════
-        //  HORIZONTAL: reproductor izquierda | info + grid derecha
-        // ════════════════════════════════════════════════════════════════════
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BgDeep)
-        ) {
-            // ── Reproductor mitad izquierda ───────────────────────────────────
-            Box(modifier = Modifier.weight(1f)) {
-                VideoPlayer(
-                    item             = selectedItem,
-                    fillHeight       = true
+    val isLandscape =
+        configuration.orientation ==
+                Configuration.ORIENTATION_LANDSCAPE
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        BackgroundTop,
+                        BackgroundBottom
+                    )
+                )
+            )
+    ) {
+
+        if (isLandscape) {
+
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+
+                    TopSection(
+                        navController = navController
+                    )
+
+                    VideoPlayer(
+                        item = selectedItem,
+                        fillHeight = true
+                    )
+                }
+
+                RightPanel(
+                    items = sampleItems,
+                    selectedItem = selectedItem,
+                    progress = progress,
+                    onSelect = {
+                        selectedItem = it
+                        progress = 0f
+                    }
                 )
             }
 
-            // ── Panel derecho ─────────────────────────────────────────────────
+        } else {
+
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
+                modifier = Modifier.fillMaxSize()
             ) {
-                // Info del video
+
+                TopSection(
+                    navController = navController
+                )
+
+                VideoPlayer(
+                    item = selectedItem,
+                    fillHeight = false
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(BgCard)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(horizontal = 20.dp)
                 ) {
+
                     Text(
-                        text       = selectedItem.title,
-                        color      = TextPrim,
-                        fontSize   = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines   = 1,
-                        overflow   = TextOverflow.Ellipsis
+                        text = selectedItem.title,
+                        color = WhiteSoft,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     LinearProgressIndicator(
-                        progress   = { progress },
-                        modifier   = Modifier
+                        progress = { progress },
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(2.dp)),
-                        color      = BarFill,
-                        trackColor = BarBg,
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(20.dp)),
+                        color = Primary,
+                        trackColor = Color(0xFF334155)
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
-                        text     = selectedItem.duration,
-                        color    = TextSec,
-                        fontSize = 11.sp
+                        text = selectedItem.duration,
+                        color = GrayText,
+                        fontSize = 13.sp
                     )
                 }
 
-                // Grid 2 columnas en horizontal
+                Spacer(modifier = Modifier.height(26.dp))
+
                 LazyVerticalGrid(
-                    columns               = GridCells.Fixed(2),
-                    modifier              = Modifier
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 6.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement   = Arrangement.spacedBy(6.dp),
-                    contentPadding        = PaddingValues(bottom = 8.dp)
+                        .padding(horizontal = 18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
+
                     items(sampleItems) { item ->
+
                         ContentCard(
-                            item       = item,
+                            item = item,
                             isSelected = item.id == selectedItem.id,
-                            onClick    = { selectedItem = item; progress = 0f }
+                            onClick = {
+                                selectedItem = item
+                                progress = 0f
+                            }
                         )
                     }
-                }
-            }
-        }
-
-    } else {
-        // ════════════════════════════════════════════════════════════════════
-        //  VERTICAL: reproductor arriba | info | grid abajo
-        // ════════════════════════════════════════════════════════════════════
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BgDeep)
-        ) {
-            VideoPlayer(
-                item       = selectedItem,
-                fillHeight = false
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BgCard)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text       = selectedItem.title,
-                    color      = TextPrim,
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines   = 1,
-                    overflow   = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                LinearProgressIndicator(
-                    progress   = { progress },
-                    modifier   = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color      = BarFill,
-                    trackColor = BarBg,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text     = selectedItem.duration,
-                    color    = TextSec,
-                    fontSize = 12.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Grid 3 columnas en vertical
-            LazyVerticalGrid(
-                columns               = GridCells.Fixed(3),
-                modifier              = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement   = Arrangement.spacedBy(8.dp),
-                contentPadding        = PaddingValues(bottom = 16.dp)
-            ) {
-                items(sampleItems) { item ->
-                    ContentCard(
-                        item       = item,
-                        isSelected = item.id == selectedItem.id,
-                        onClick    = { selectedItem = item; progress = 0f }
-                    )
                 }
             }
         }
     }
 }
 
-// ── Reproductor ───────────────────────────────────────────────────────────────
+@Composable
+private fun TopSection(
+    navController: NavController
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 18.dp,
+                vertical = 18.dp
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        IconButton(
+            onClick = {
+                navController.popBackStack()
+            }
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = null,
+                tint = WhiteSoft
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Box(
+            modifier = Modifier
+                .size(46.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Primary,
+                            PrimaryLight
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.VideoLibrary,
+                contentDescription = null,
+                tint = Color.White
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column {
+
+            Text(
+                text = "Contenido",
+                color = WhiteSoft,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = "Videos y recursos emocionales",
+                color = GrayText,
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun RightPanel(
+    items: List<ContentItem>,
+    selectedItem: ContentItem,
+    progress: Float,
+    onSelect: (ContentItem) -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .width(420.dp)
+            .fillMaxHeight()
+            .padding(18.dp)
+    ) {
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = CardColor.copy(alpha = 0.96f)
+            )
+        ) {
+
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+
+                Text(
+                    text = selectedItem.title,
+                    color = WhiteSoft,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(20.dp)),
+                    color = Primary,
+                    trackColor = Color(0xFF334155)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = selectedItem.duration,
+                    color = GrayText,
+                    fontSize = 13.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+
+            items(items) { item ->
+
+                ContentCard(
+                    item = item,
+                    isSelected = item.id == selectedItem.id,
+                    onClick = {
+                        onSelect(item)
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun VideoPlayer(
     item: ContentItem,
     fillHeight: Boolean
 ) {
+
     Box(
-        modifier = if (fillHeight)
-            Modifier.fillMaxSize().background(BgPlayer)
-        else
-            Modifier.fillMaxWidth().height(220.dp).background(BgPlayer),
+        modifier =
+            if (fillHeight)
+                Modifier
+                    .fillMaxSize()
+                    .padding(18.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(PlayerColor)
+            else
+                Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .padding(horizontal = 18.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(PlayerColor),
         contentAlignment = Alignment.Center
     ) {
-        // Botón play
+
         Box(
             modifier = Modifier
-                .size(72.dp)
+                .size(96.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.15f)),
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Primary,
+                            PrimaryLight
+                        )
+                    )
+                ),
             contentAlignment = Alignment.Center
         ) {
+
             Icon(
-                imageVector        = Icons.Default.PlayArrow,
-                contentDescription = "Reproducir",
-                tint               = Color.White,
-                modifier           = Modifier.size(44.dp)
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(54.dp)
             )
         }
 
-        // Título en la parte inferior del player
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomStart)
-                .background(Color.Black.copy(alpha = 0.35f))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .background(
+                    Color.Black.copy(alpha = 0.45f)
+                )
+                .padding(
+                    horizontal = 18.dp,
+                    vertical = 14.dp
+                )
         ) {
+
             Text(
-                text     = item.title,
-                color    = TextPrim,
-                fontSize = 13.sp,
+                text = item.title,
+                color = WhiteSoft,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -254,49 +426,92 @@ private fun VideoPlayer(
     }
 }
 
-// ── Tarjeta de contenido ──────────────────────────────────────────────────────
 @Composable
 private fun ContentCard(
     item: ContentItem,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+
+    val animatedColor by animateColorAsState(
+        targetValue =
+            if (isSelected)
+                Primary.copy(alpha = 0.16f)
+            else
+                CardColor.copy(alpha = 0.96f),
+        label = "card"
+    )
+
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(8.dp))
-            .background(BgCard)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
+            .clip(RoundedCornerShape(24.dp))
+            .background(animatedColor)
+            .clickable {
+                onClick()
+            }
+            .padding(16.dp)
     ) {
-        if (isSelected) {
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(BarFill.copy(alpha = 0.15f))
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier            = Modifier.padding(6.dp)
-        ) {
-            Icon(
-                imageVector        = Icons.Default.PlayArrow,
-                contentDescription = null,
-                tint               = if (isSelected) BarFill else TextSec,
-                modifier           = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text       = item.title,
-                color      = if (isSelected) TextPrim else TextSec,
-                fontSize   = 9.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                maxLines   = 2,
-                overflow   = TextOverflow.Ellipsis,
-                lineHeight = 12.sp
-            )
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected)
+                            Brush.linearGradient(
+                                listOf(
+                                    Primary,
+                                    PrimaryLight
+                                )
+                            )
+                        else
+                            Brush.linearGradient(
+                                listOf(
+                                    Color(0xFF334155),
+                                    Color(0xFF475569)
+                                )
+                            )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
+
+            Column {
+
+                Text(
+                    text = item.title,
+                    color = WhiteSoft,
+                    fontSize = 13.sp,
+                    fontWeight =
+                        if (isSelected)
+                            FontWeight.Bold
+                        else
+                            FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = item.duration,
+                    color = GrayText,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
