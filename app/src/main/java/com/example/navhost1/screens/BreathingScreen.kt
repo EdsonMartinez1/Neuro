@@ -25,6 +25,10 @@ import androidx.navigation.NavController
 import com.example.navhost1.R
 import androidx.compose.ui.res.stringResource
 
+
+
+
+
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF1E293B)
 
@@ -203,7 +207,13 @@ fun BreathingScreen(navController: NavController) {
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { },
+                onClick = {
+
+                    registrarUsoHerramienta(
+                        "respiracion"
+                    )
+
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(58.dp),

@@ -39,6 +39,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 
+
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF1E293B)
 private val Primary = Color(0xFF8B5CF6)
@@ -54,6 +58,18 @@ private val BorderColor = Color(0xFF334155)
 fun LoginScreen(navController: NavController) {
 
     var isLogin by remember { mutableStateOf(true) }
+
+    val auth = FirebaseAuth.getInstance()
+
+    val db = FirebaseFirestore.getInstance()
+
+    var errorMessage by remember {
+        mutableStateOf("")
+    }
+
+    var successMessage by remember {
+        mutableStateOf("")
+    }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -193,6 +209,22 @@ fun LoginScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(30.dp))
 
+                    if (errorMessage.isNotEmpty()) {
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
+                    if (successMessage.isNotEmpty()) {
+                        Text(
+                            text = successMessage,
+                            color = Color.Green,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
                     AnimatedContent(
                         targetState = isLogin,
                         transitionSpec = {
@@ -243,17 +275,42 @@ fun LoginScreen(navController: NavController) {
 
                                 Button(
                                     onClick = {
-                                        val username = if (email.contains("@"))
-                                            email.substringBefore("@")
-                                        else email
 
-                                        navController.navigate(
-                                            "onboarding/${username.replaceFirstChar { it.uppercase() }}"
-                                        ) {
-                                            popUpTo("login") {
-                                                inclusive = true
-                                            }
+                                        errorMessage = ""
+                                        successMessage = ""
+
+                                        if (email.isBlank() || password.isBlank()) {
+
+                                            errorMessage = "Completa todos los campos"
+                                            return@Button
                                         }
+
+                                        auth.signInWithEmailAndPassword(
+                                            email.trim(),
+                                            password
+                                        )
+                                            .addOnSuccessListener {
+
+                                                successMessage =
+                                                    "Inicio de sesión exitoso"
+
+                                                val username =
+                                                    email.substringBefore("@")
+
+                                                navController.navigate(
+                                                    "onboarding/${username.replaceFirstChar { it.uppercase() }}"
+                                                ) {
+                                                    popUpTo("login") {
+                                                        inclusive = true
+                                                    }
+                                                }
+                                            }
+                                            .addOnFailureListener {
+
+                                                errorMessage =
+                                                    it.localizedMessage
+                                                        ?: "Error al iniciar sesión"
+                                            }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -315,18 +372,76 @@ fun LoginScreen(navController: NavController) {
 
                                 Button(
                                     onClick = {
-                                        val username = if (regName.isNotBlank()) regName
-                                        else if (regEmail.contains("@"))
-                                            regEmail.substringBefore("@")
-                                        else regEmail
 
-                                        navController.navigate(
-                                            "onboarding/${username.replaceFirstChar { it.uppercase() }}"
+                                        errorMessage = ""
+                                        successMessage = ""
+
+                                        if (
+                                            regName.isBlank() ||
+                                            regEmail.isBlank() ||
+                                            regPassword.isBlank() ||
+                                            regConfirm.isBlank()
                                         ) {
-                                            popUpTo("login") {
-                                                inclusive = true
-                                            }
+
+                                            errorMessage =
+                                                "Completa todos los campos"
+
+                                            return@Button
                                         }
+
+                                        if (regPassword != regConfirm) {
+
+                                            errorMessage =
+                                                "Las contraseñas no coinciden"
+
+                                            return@Button
+                                        }
+
+                                        auth.createUserWithEmailAndPassword(
+                                            regEmail.trim(),
+                                            regPassword
+                                        )
+                                            .addOnSuccessListener {
+
+                                                val uid = auth.currentUser?.uid ?: return@addOnSuccessListener
+
+                                                val usuario = hashMapOf(
+                                                    "nombre" to regName,
+                                                    "email" to regEmail,
+                                                    "nivelEmocional" to 1,
+                                                    "racha" to 0,
+                                                    "arbolNivel" to 1,
+                                                    "fechaRegistro" to System.currentTimeMillis()
+                                                )
+
+                                                db.collection("usuarios")
+                                                    .document(uid)
+                                                    .set(usuario)
+                                                    .addOnSuccessListener {
+
+                                                        successMessage =
+                                                            "Cuenta creada correctamente"
+
+                                                        navController.navigate(
+                                                            "onboarding/${regName.replaceFirstChar { it.uppercase() }}"
+                                                        ) {
+                                                            popUpTo("login") {
+                                                                inclusive = true
+                                                            }
+                                                        }
+                                                    }
+                                                    .addOnFailureListener {
+
+                                                        errorMessage =
+                                                            "Usuario creado pero no se pudo guardar el perfil"
+                                                    }
+                                            }
+                                            .addOnFailureListener {
+
+                                                errorMessage =
+                                                    it.localizedMessage
+                                                        ?: "Error al crear cuenta"
+                                            }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 
+import com.google.firebase.auth.FirebaseAuth
+
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF1E293B)
 
@@ -47,6 +49,8 @@ fun SettingsScreen(navController: NavController) {
     var darkMode by remember {
         mutableStateOf(true)
     }
+
+    val auth = FirebaseAuth.getInstance()
 
     Box(
         modifier = Modifier
@@ -209,6 +213,20 @@ fun SettingsScreen(navController: NavController) {
                             darkMode = it
                         }
                     )
+                    DividerDark()
+
+                    SettingsItem(
+                        icon = Icons.Default.Person,
+                        title = "Cerrar sesión",
+                        subtitle = "Salir de tu cuenta de NeuraBloom"
+                    ) {
+
+                        auth.signOut()
+
+                        navController.navigate("login") {
+                            popUpTo(0)
+                        }
+                    }
                 }
             }
 

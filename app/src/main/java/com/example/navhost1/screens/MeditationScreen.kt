@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 
+
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF1E293B)
 
@@ -213,7 +214,13 @@ fun MeditationScreen(navController: NavController) {
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { },
+                onClick = {
+
+                    registrarUsoHerramienta(
+                        "meditacion"
+                    )
+
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(58.dp),

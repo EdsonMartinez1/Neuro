@@ -25,6 +25,8 @@ import androidx.navigation.NavController
 import com.example.navhost1.R
 import androidx.compose.ui.res.stringResource
 
+
+
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF1E293B)
 
@@ -300,6 +302,11 @@ fun GratitudeScreen(navController: NavController) {
                                 text2.isNotBlank() ||
                                 text3.isNotBlank()
                             ) {
+
+                                registrarUsoHerramienta(
+                                    "gratitud"
+                                )
+
                                 saved = true
                             }
                         },
