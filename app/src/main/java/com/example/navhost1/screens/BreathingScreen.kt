@@ -24,6 +24,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.delay
+
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 
 
 
@@ -40,37 +47,115 @@ private val GrayText = Color(0xFFCBD5E1)
 
 @Composable
 fun BreathingScreen(navController: NavController) {
+    val context = androidx.compose.ui.platform.LocalContext.current
 
-    val infiniteTransition = rememberInfiniteTransition(label = "breathing")
+    fun vibrar(duracion: Long) {
 
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.25f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 4000,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+            val vibratorManager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
+                        as VibratorManager
+
+            vibratorManager.defaultVibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    duracion,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            val vibrator =
+                context.getSystemService(Context.VIBRATOR_SERVICE)
+                        as Vibrator
+
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    duracion,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+
+        } else {
+
+            val vibrator =
+                context.getSystemService(Context.VIBRATOR_SERVICE)
+                        as Vibrator
+
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(duracion)
+        }
+    }
+
+    var sesionIniciada by remember {
+        mutableStateOf(false)
+    }
+
+    var sesionCompletada by remember {
+        mutableStateOf(false)
+    }
+    var fase by remember {
+        mutableStateOf("LISTO")
+    }
+
+    val escalaObjetivo =
+        when (fase) {
+            "INHALA" -> 1.25f
+            "MANTÉN" -> 1.25f
+            "EXHALA" -> 0.95f
+            else -> 0.95f
+        }
+
+    val scale by animateFloatAsState(
+        targetValue = escalaObjetivo,
+        animationSpec = tween(
+            durationMillis = when (fase) {
+                "INHALA" -> 4000
+                "EXHALA" -> 6000
+                else -> 0
+            },
+            easing = FastOutSlowInEasing
         ),
-        label = "scale"
+        label = "breathingScale"
     )
 
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000),
-            repeatMode = RepeatMode.Reverse
+    val alphaObjetivo =
+        if (sesionIniciada) 0.8f else 0.3f
+
+    val alpha by animateFloatAsState(
+        targetValue = alphaObjetivo,
+        animationSpec = tween(
+            durationMillis = 1000
         ),
-        label = "alpha"
+        label = "breathingAlpha"
     )
 
-    val text =
-        if (scale > 1.1f)
-            stringResource(R.string.breathing_in)
-        else
-            stringResource(R.string.breathing_ex)
+
+
+    LaunchedEffect(sesionIniciada) {
+
+        if (sesionIniciada) {
+
+            repeat(3) {
+
+                fase = "INHALA"
+                vibrar(150)
+                delay(4000)
+
+                fase = "MANTÉN"
+                delay(4000)
+
+                fase = "EXHALA"
+                vibrar(150)
+                delay(6000)
+            }
+
+            fase = "COMPLETADO"
+            sesionCompletada = true
+            sesionIniciada = false
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -144,7 +229,14 @@ fun BreathingScreen(navController: NavController) {
 
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.scale(scale)
+                modifier = Modifier.scale(
+                    when (fase) {
+                        "INHALA" -> scale
+                        "MANTÉN" -> 1.25f
+                        "EXHALA" -> scale
+                        else -> 0.95f
+                    }
+                )
             ) {
 
                 Box(
@@ -190,7 +282,7 @@ fun BreathingScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(80.dp))
 
             Text(
-                text = text,
+                text = fase,
                 color = WhiteSoft,
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Bold
@@ -209,9 +301,24 @@ fun BreathingScreen(navController: NavController) {
             Button(
                 onClick = {
 
-                    registrarUsoHerramienta(
-                        "respiracion"
-                    )
+                    if (sesionCompletada) {
+
+                        sesionCompletada = false
+                        sesionIniciada = true
+                        fase = "INHALA"
+
+                        registrarUsoHerramienta(
+                            "respiracion"
+                        )
+
+                    } else {
+
+                        sesionIniciada = true
+
+                        registrarUsoHerramienta(
+                            "respiracion"
+                        )
+                    }
 
                 },
                 modifier = Modifier
@@ -224,13 +331,41 @@ fun BreathingScreen(navController: NavController) {
             ) {
 
                 Text(
-                    text = "Comenzar sesión",
+                    text =
+                        if (sesionCompletada)
+                            "Comenzar otra sesión"
+                        else
+                            "Comenzar sesión",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
+
+            if (sesionCompletada) {
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                Text(
+                    text = "✨ Sesión completada",
+                    color = WhiteSoft,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                Text(
+                    text = "Has terminado tu ejercicio de respiración.",
+                    color = GrayText,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }

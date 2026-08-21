@@ -25,6 +25,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
 import androidx.compose.ui.res.stringResource
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.launch
+
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF1E293B)
@@ -43,12 +54,135 @@ data class Message(
     val isUser: Boolean
 )
 
+suspend fun enviarMensajeAlChat(
+    mensaje: String
+): String? {
+
+    return withContext(Dispatchers.IO) {
+
+        try {
+
+            val url = URL(
+                "https://openai-api-worker.ed-ia-app.workers.dev"
+            )
+
+            val connection =
+                url.openConnection() as HttpURLConnection
+
+            connection.requestMethod = "POST"
+
+            connection.setRequestProperty(
+                "Content-Type",
+                "application/json"
+            )
+
+            connection.doOutput = true
+
+            val body = JSONObject().apply {
+
+                put(
+                    "type",
+                    "chat"
+                )
+
+                put(
+                    "message",
+                    mensaje
+                )
+            }
+
+            connection.outputStream.use { output ->
+
+                output.write(
+                    body
+                        .toString()
+                        .toByteArray(Charsets.UTF_8)
+                )
+            }
+
+            val response =
+                if (connection.responseCode in 200..299) {
+                    connection.inputStream
+                        .bufferedReader()
+                        .use { it.readText() }
+                } else {
+                    connection.errorStream
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        ?: ""
+                }
+
+            Log.e(
+                "CHAT_IA",
+                "HTTP ${connection.responseCode}: $response"
+            )
+
+            connection.disconnect()
+
+            val json =
+                JSONObject(response)
+
+            json.getString("result")
+
+        } catch (e: Exception) {
+
+            Log.e(
+                "CHAT_IA",
+                "Error al conectar con la IA",
+                e
+            )
+
+            null
+        }
+    }
+}
+
+suspend fun cargarHistorialChat(
+    uid: String
+): List<Message> {
+
+    val db = FirebaseFirestore.getInstance()
+
+    val snapshot =
+        db.collection("usuarios")
+            .document(uid)
+            .collection("chat")
+            .orderBy("fecha")
+            .get()
+            .await()
+
+    return snapshot.documents.mapNotNull { documento ->
+
+        val texto =
+            documento.getString("texto")
+
+        val isUser =
+            documento.getBoolean("isUser")
+
+        if (texto != null && isUser != null) {
+
+            Message(
+                text = texto,
+                isUser = isUser
+            )
+
+        } else {
+            null
+        }
+    }
+}
+
 @Composable
 fun ChatScreen(navController: NavController) {
 
     var message by remember {
         mutableStateOf(TextFieldValue(""))
     }
+
+    val scope = rememberCoroutineScope()
+
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
     val initialGreeting = stringResource(R.string.chat_ia_saludo)
 
@@ -58,6 +192,33 @@ fun ChatScreen(navController: NavController) {
                 Message(initialGreeting, false)
             )
         )
+    }
+
+    LaunchedEffect(Unit) {
+
+        val uid = auth.currentUser?.uid
+
+        if (uid != null) {
+
+            try {
+
+                val historial =
+                    cargarHistorialChat(uid)
+
+                if (historial.isNotEmpty()) {
+
+                    messages = historial
+                }
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "CHAT_FIREBASE",
+                    "Error al cargar historial",
+                    e
+                )
+            }
+        }
     }
 
     Box(
@@ -216,17 +377,67 @@ fun ChatScreen(navController: NavController) {
 
                             if (message.text.isNotBlank()) {
 
+                                val textoUsuario = message.text
+
                                 messages = messages + Message(
-                                    message.text,
+                                    textoUsuario,
                                     true
                                 )
 
-                                messages = messages + Message(
-                                    "Estoy aquí para ayudarte 💜",
-                                    false
-                                )
-
                                 message = TextFieldValue("")
+
+                                val uid = auth.currentUser?.uid
+
+                                if (uid != null) {
+
+                                    db.collection("usuarios")
+                                        .document(uid)
+                                        .collection("chat")
+                                        .add(
+                                            mapOf(
+                                                "texto" to textoUsuario,
+                                                "isUser" to true,
+                                                "fecha" to System.currentTimeMillis()
+                                            )
+                                        )
+                                }
+
+                                scope.launch {
+
+                                    val respuestaIA =
+                                        enviarMensajeAlChat(textoUsuario)
+
+                                    if (respuestaIA != null) {
+
+                                        messages = messages + Message(
+                                            respuestaIA,
+                                            false
+                                        )
+
+                                        val uid = auth.currentUser?.uid
+
+                                        if (uid != null) {
+
+                                            db.collection("usuarios")
+                                                .document(uid)
+                                                .collection("chat")
+                                                .add(
+                                                    mapOf(
+                                                        "texto" to respuestaIA,
+                                                        "isUser" to false,
+                                                        "fecha" to System.currentTimeMillis()
+                                                    )
+                                                )
+                                        }
+
+                                    } else {
+
+                                        messages = messages + Message(
+                                            "No pude conectarme con NeuraBloom en este momento. Inténtalo nuevamente. 💜",
+                                            false
+                                        )
+                                    }
+                                }
                             }
                         },
                         containerColor = Primary,

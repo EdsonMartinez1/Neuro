@@ -39,6 +39,8 @@ import java.net.URL
 
 import kotlinx.coroutines.launch
 
+import java.util.Calendar
+
 
 
 private val BackgroundTop = Color(0xFF0F172A)
@@ -97,7 +99,14 @@ data class EntradaDiario(
     val emocion: String = "😌 Tranquilo"
 )
 
-suspend fun analizarDiarioConIA(texto: String): String? {
+data class DiaryAIResponse(
+    val emotion: String,
+    val intensity: Int,
+    val response: String,
+    val recommendation: String
+)
+
+suspend fun analizarDiarioConIA(texto: String): DiaryAIResponse? {
 
     return withContext(Dispatchers.IO) {
 
@@ -137,7 +146,12 @@ suspend fun analizarDiarioConIA(texto: String): String? {
 
             val json = JSONObject(response)
 
-            json.getString("result")
+            DiaryAIResponse(
+                emotion = json.getString("emotion"),
+                intensity = json.getInt("intensity"),
+                response = json.getString("response"),
+                recommendation = json.getString("recommendation")
+            )
 
         } catch (e: Exception) {
 
@@ -170,6 +184,18 @@ fun DiaryScreen(navController: NavController) {
     }
 
     var respuestaIA by remember {
+        mutableStateOf("")
+    }
+
+    var emocionIA by remember {
+        mutableStateOf("")
+    }
+
+    var intensidadIA by remember {
+        mutableStateOf(0)
+    }
+
+    var recomendacionIA by remember {
         mutableStateOf("")
     }
 
@@ -395,127 +421,204 @@ fun DiaryScreen(navController: NavController) {
                                     val resultadoIA =
                                         analizarDiarioConIA(textoEntrada)
 
-                                    respuestaIA = resultadoIA ?: ""
+                                    if (resultadoIA == null) {
+
+                                        analizandoIA = false
+
+                                        Log.e(
+                                            "IA_DIARIO",
+                                            "No se pudo obtener respuesta de la IA"
+                                        )
+
+                                        return@launch
+                                    }
+
+                                    // Datos obtenidos de la IA
+                                    respuestaIA = resultadoIA.response
+
+                                    emocionIA = resultadoIA.emotion
+
+                                    intensidadIA = resultadoIA.intensity
+
+                                    recomendacionIA = resultadoIA.recommendation
+
                                     analizandoIA = false
-                                }
 
-                                val emocionDetectada =
-                                    detectarEmocion(textoEntrada)
+                                    // -------------------------
+                                    // GUARDAR DIARIO EN FIREBASE
+                                    // -------------------------
 
-                                val diario = hashMapOf(
+                                    val ahora = System.currentTimeMillis()
 
-                                    "texto" to text.text,
-                                    "fecha" to System.currentTimeMillis(),
-                                    "emocion" to emocionDetectada
-                                )
+                                    val diario = hashMapOf(
 
-                                db.collection("diarios")
-                                    .document(uid)
-                                    .collection("entradas")
-                                    .add(diario)
-                                    .addOnSuccessListener {
+                                        "texto" to textoEntrada,
 
-                                        val userRef =
-                                            db.collection("usuarios")
-                                                .document(uid)
+                                        "fecha" to ahora,
 
-                                        val totalEntradas = entradas.size + 1
+                                        "emocion" to resultadoIA.emotion,
 
-                                        userRef.get()
-                                            .addOnSuccessListener { document ->
+                                        "intensidad" to resultadoIA.intensity,
 
-                                                var xpActual =
-                                                    document.getLong("xp") ?: 0
+                                        "respuestaIA" to resultadoIA.response,
 
-                                                val rachaActual =
-                                                    document.getLong("racha")
-                                                        ?.toInt() ?: 0
+                                        "recomendacionIA" to resultadoIA.recommendation
+                                    )
 
-                                                val ultimaEntrada =
-                                                    document.getLong("ultimaEntrada")
-                                                        ?: 0L
+                                    db.collection("diarios")
+                                        .document(uid)
+                                        .collection("entradas")
+                                        .add(diario)
+                                        .addOnSuccessListener {
 
-                                                val ahora = System.currentTimeMillis()
+                                            val userRef =
+                                                db.collection("usuarios")
+                                                    .document(uid)
 
-                                                val unDia = 24 * 60 * 60 * 1000L
+                                            val totalEntradas =
+                                                entradas.size + 1
 
-                                                val diasTranscurridos =
-                                                    (ahora - ultimaEntrada) / unDia
+                                            userRef.get()
+                                                .addOnSuccessListener { document ->
 
-                                                val nuevaRacha = when {
+                                                    var xpActual =
+                                                        document.getLong("xp") ?: 0
 
-                                                    ultimaEntrada == 0L -> 1
+                                                    val rachaActual =
+                                                        document.getLong("racha")
+                                                            ?.toInt() ?: 0
 
-                                                    diasTranscurridos == 0L -> rachaActual
+                                                    val ultimaEntrada =
+                                                        document.getLong("ultimaEntrada")
+                                                            ?: 0L
 
-                                                    diasTranscurridos == 1L -> rachaActual + 1
+                                                    val hoy = Calendar.getInstance().apply {
+                                                        timeInMillis = ahora
+                                                    }
 
-                                                    else -> 1
-                                                }
+                                                    val ultimoDia = Calendar.getInstance().apply {
+                                                        timeInMillis = ultimaEntrada
+                                                    }
 
+                                                    val mismoDia =
+                                                        ultimaEntrada != 0L &&
+                                                                hoy.get(Calendar.YEAR) == ultimoDia.get(Calendar.YEAR) &&
+                                                                hoy.get(Calendar.DAY_OF_YEAR) == ultimoDia.get(Calendar.DAY_OF_YEAR)
 
+                                                    val ayer = Calendar.getInstance().apply {
+                                                        timeInMillis = ahora
+                                                        add(Calendar.DAY_OF_YEAR, -1)
+                                                    }
 
-                                                // XP base
-                                                xpActual += 20
+                                                    val fueAyer =
+                                                        ultimaEntrada != 0L &&
+                                                                ayer.get(Calendar.YEAR) == ultimoDia.get(Calendar.YEAR) &&
+                                                                ayer.get(Calendar.DAY_OF_YEAR) == ultimoDia.get(Calendar.DAY_OF_YEAR)
 
-// XP por diario largo
-                                                if (text.text.length >= 200) {
-                                                    xpActual += 10
-                                                }
+                                                    val nuevaRacha = when {
 
-// Bonus de racha
-                                                if (nuevaRacha == 3 || nuevaRacha == 7) {
-                                                    xpActual += 50
-                                                }
+                                                        ultimaEntrada == 0L ->
+                                                            1
 
-                                                val nuevoNivel = when {
-                                                    xpActual >= 500 -> 5
-                                                    xpActual >= 300 -> 4
-                                                    xpActual >= 200 -> 3
-                                                    xpActual >= 100 -> 2
-                                                    else -> 1
-                                                }
+                                                        mismoDia ->
+                                                            rachaActual
 
-                                                val logros = hashMapOf(
-                                                    "primer_diario" to true,
-                                                    "racha_3" to (nuevaRacha >= 3),
-                                                    "racha_7" to (nuevaRacha >= 7),
-                                                    "arbol_nivel_5" to (nuevoNivel >= 5)
-                                                )
+                                                        fueAyer ->
+                                                            rachaActual + 1
 
-                                                userRef.update(
-                                                    mapOf(
-                                                        "xp" to xpActual,
-                                                        "arbolNivel" to nuevoNivel,
-                                                        "racha" to nuevaRacha,
-                                                        "ultimaEntrada" to ahora
+                                                        else ->
+                                                            1
+                                                    }
+
+                                                    // XP base
+                                                    xpActual += 20
+
+                                                    // XP por diario largo
+                                                    if (textoEntrada.length >= 200) {
+                                                        xpActual += 10
+                                                    }
+
+                                                    // Bonus de racha
+                                                    if (nuevaRacha == 3 ||
+                                                        nuevaRacha == 7
+                                                    ) {
+                                                        xpActual += 50
+                                                    }
+
+                                                    val nuevoNivel = when {
+
+                                                        xpActual >= 500 -> 5
+
+                                                        xpActual >= 300 -> 4
+
+                                                        xpActual >= 200 -> 3
+
+                                                        xpActual >= 100 -> 2
+
+                                                        else -> 1
+                                                    }
+
+                                                    val logros = hashMapOf(
+
+                                                        "primer_diario" to true,
+
+                                                        "racha_3" to
+                                                                (nuevaRacha >= 3),
+
+                                                        "racha_7" to
+                                                                (nuevaRacha >= 7),
+
+                                                        "arbol_nivel_5" to
+                                                                (nuevoNivel >= 5)
                                                     )
+
+                                                    userRef.update(
+                                                        mapOf(
+
+                                                            "xp" to xpActual,
+
+                                                            "arbolNivel" to nuevoNivel,
+
+                                                            "racha" to nuevaRacha,
+
+                                                            "ultimaEntrada" to ahora
+                                                        )
+                                                    )
+
+                                                    userRef.collection("logros")
+                                                        .document("estado")
+                                                        .set(logros)
+                                                }
+
+                                            // Actualizar lista local
+                                            entradas = listOf(
+
+                                                EntradaDiario(
+
+                                                    texto = textoEntrada,
+
+                                                    fecha = ahora,
+
+                                                    emocion = resultadoIA.emotion
                                                 )
 
-                                                userRef.collection("logros")
-                                                    .document("estado")
-                                                    .set(logros)
-                                            }
+                                            ) + entradas
 
+                                            saved = true
 
+                                            text =
+                                                TextFieldValue("")
+                                        }
 
+                                        .addOnFailureListener { e ->
 
-                                        entradas = listOf(
-                                            EntradaDiario(
-                                                texto = text.text,
-                                                fecha = System.currentTimeMillis(),
-                                                emocion = emocionDetectada
+                                            Log.e(
+                                                "FIREBASE",
+                                                "Error al guardar",
+                                                e
                                             )
-                                        ) + entradas
-
-                                        saved = true
-
-                                        text = TextFieldValue("")
-                                    }
-
-                                    .addOnFailureListener { e ->
-                                        Log.e("FIREBASE", "Error al guardar", e)
-                                    }
+                                        }
+                                }
                             }
                         },
                         modifier = Modifier
@@ -579,7 +682,43 @@ fun DiaryScreen(navController: NavController) {
                                 Spacer(modifier = Modifier.height(10.dp))
 
                                 Text(
+                                    text = "Emoción: $emocionIA",
+                                    color = WhiteSoft,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "Intensidad: $intensidadIA/10",
+                                    color = WhiteSoft,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Text(
                                     text = respuestaIA,
+                                    color = WhiteSoft,
+                                    fontSize = 14.sp,
+                                    lineHeight = 22.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Text(
+                                    text = "💡 Recomendación",
+                                    color = PrimaryLight,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Text(
+                                    text = recomendacionIA,
                                     color = WhiteSoft,
                                     fontSize = 14.sp,
                                     lineHeight = 22.sp

@@ -67,6 +67,12 @@ fun NavGraph(navController: NavHostController) {
             EstadisticasScreen()
         }
 
+        // 🌱 HÁBITOS
+        composable("habitos") {
+            HabitosScreen()
+        }
+
+
         // 🎓 CONTENIDO
         composable("content") {
             ContentScreen(navController)

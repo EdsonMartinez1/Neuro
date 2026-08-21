@@ -42,6 +42,9 @@ import com.google.firebase.firestore.Query
 import androidx.compose.material3.LinearProgressIndicator
 
 import com.example.navhost1.components.AnimatedTree
+import com.example.navhost1.habits.HabitRepository
+import android.util.Log
+
 
 
 private val BackgroundTop = Color(0xFF0F172A)
@@ -62,11 +65,20 @@ data class HomeItem(
     val route: String
 )
 
+data class HomeHabit(
+    val id: String,
+    val nombre: String,
+    val categoria: String,
+    val completado: Boolean,
+    val xp: Long
+)
+
 @Composable
 fun HomeScreen(navController: NavController, username: String?) {
 
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+    val habitRepository = HabitRepository()
 
     var nombreUsuario by remember {
         mutableStateOf("Usuario")
@@ -76,6 +88,9 @@ fun HomeScreen(navController: NavController, username: String?) {
     }
     var xp by remember {
         mutableStateOf(0L)
+    }
+    var habitosHome by remember {
+        mutableStateOf<List<HomeHabit>>(emptyList())
     }
     var racha by remember {
         mutableStateOf(0)
@@ -140,6 +155,45 @@ fun HomeScreen(navController: NavController, username: String?) {
     LaunchedEffect(Unit) {
 
         val uid = auth.currentUser?.uid ?: return@LaunchedEffect
+
+        db.collection("usuarios")
+            .document(uid)
+            .collection("habitos")
+            .get()
+            .addOnSuccessListener { result ->
+
+                habitosHome =
+                    result.documents.mapNotNull { documento ->
+
+                        val id =
+                            documento.getString("id")
+                                ?: documento.id
+
+                        val nombre =
+                            documento.getString("nombre")
+                                ?: return@mapNotNull null
+
+                        val categoria =
+                            documento.getString("categoria")
+                                ?: ""
+
+                        val completado =
+                            documento.getBoolean("completado")
+                                ?: false
+
+                        val xpHabit =
+                            documento.getLong("xp")
+                                ?: 0L
+
+                        HomeHabit(
+                            id = id,
+                            nombre = nombre,
+                            categoria = categoria,
+                            completado = completado,
+                            xp = xpHabit
+                        )
+                    }
+            }
 
         db.collection("diarios")
             .document(uid)
@@ -239,7 +293,8 @@ fun HomeScreen(navController: NavController, username: String?) {
         HomeItem("Herramientas", Icons.Default.Settings, "tools"),
         HomeItem("Diario", Icons.Default.Edit, "diary"),
         HomeItem("Contenido", Icons.Default.MenuBook, "content"),
-        HomeItem("Estadísticas", Icons.Default.Psychology, "estadisticas")
+        HomeItem("Estadísticas", Icons.Default.Psychology, "estadisticas"),
+        HomeItem("Hábitos", Icons.Default.Psychology, "habitos")
     )
 
     Box(
@@ -629,6 +684,199 @@ fun HomeScreen(navController: NavController, username: String?) {
                         fontSize = 14.sp
                     )
                 }
+            }
+
+            // Hábitos de hoy
+            if (habitosHome.isNotEmpty()) {
+
+                val completados =
+                    habitosHome.count { it.completado }
+
+                val total =
+                    habitosHome.size
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = CardSecondary
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Text(
+                                text = "🌱",
+                                fontSize = 28.sp
+                            )
+
+                            Spacer(
+                                modifier = Modifier.width(12.dp)
+                            )
+
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+
+                                Text(
+                                    text = "Hábitos de hoy",
+                                    color = WhiteSoft,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = "$completados de $total completados",
+                                    color = GrayText,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+
+                        Spacer(
+                            modifier = Modifier.height(16.dp)
+                        )
+
+                        habitosHome
+                            .take(3)
+                            .forEach { habit ->
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 7.dp)
+                                        .clickable {
+
+                                            val uid = auth.currentUser?.uid
+
+                                            if (uid != null) {
+
+                                                if (habit.completado) {
+
+                                                    habitRepository.descompletarHabit(
+                                                        uid = uid,
+                                                        habitId = habit.id,
+                                                        onSuccess = {
+
+                                                            habitosHome = habitosHome.map {
+
+                                                                if (it.id == habit.id) {
+                                                                    it.copy(completado = false)
+                                                                } else {
+                                                                    it
+                                                                }
+
+                                                            }
+                                                        },
+                                                        onError = {
+
+                                                            Log.e(
+                                                                "HOME_HABITOS",
+                                                                "Error al desmarcar hábito",
+                                                                it
+                                                            )
+                                                        }
+                                                    )
+
+                                                } else {
+
+                                                    habitRepository.completarHabit(
+                                                        uid = uid,
+                                                        habitId = habit.id,
+                                                        onSuccess = {
+
+                                                            habitosHome = habitosHome.map {
+
+                                                                if (it.id == habit.id) {
+                                                                    it.copy(completado = true)
+                                                                } else {
+                                                                    it
+                                                                }
+
+                                                            }
+                                                        },
+                                                        onError = {
+
+                                                            Log.e(
+                                                                "HOME_HABITOS",
+                                                                "Error al completar hábito",
+                                                                it
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        },
+                                    verticalAlignment =
+                                        Alignment.CenterVertically
+                                ) {
+
+                                    Text(
+                                        text =
+                                            if (habit.completado)
+                                                "✓"
+                                            else
+                                                "○",
+                                        color =
+                                            if (habit.completado)
+                                                Color(0xFF22C55E)
+                                            else
+                                                PrimaryLight,
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Spacer(
+                                        modifier = Modifier.width(12.dp)
+                                    )
+
+                                    Text(
+                                        text = habit.nombre,
+                                        modifier = Modifier.weight(1f),
+                                        color = WhiteSoft,
+                                        fontSize = 15.sp
+                                    )
+
+                                    Text(
+                                        text = "+${habit.xp} XP",
+                                        color = PrimaryLight,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                        Spacer(
+                            modifier = Modifier.height(8.dp)
+                        )
+
+                        TextButton(
+                            onClick = {
+                                navController.navigate("habitos")
+                            },
+                            modifier = Modifier.align(
+                                Alignment.End
+                            )
+                        ) {
+
+                            Text(
+                                text = "Ver hábitos →",
+                                color = PrimaryLight,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
