@@ -7,7 +7,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -16,9 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -38,38 +45,47 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
-
-
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.random.Random
 
+// Paleta NeuraBloom Dark Premium
 private val BackgroundTop = Color(0xFF0F172A)
-private val BackgroundBottom = Color(0xFF1E293B)
+private val BackgroundBottom = Color(0xFF090D16)
+
 private val Primary = Color(0xFF8B5CF6)
-private val PrimaryLight = Color(0xFFA78BFA)
-private val CardColor = Color(0xFF111827)
-private val FieldColor = Color(0xFF1F2937)
+private val PrimaryLight = Color(0xFFC084FC)
+private val PurpleGlow = Color(0xFF6D28D9)
+
+private val CardColor = Color(0xFF1E293B).copy(alpha = 0.75f)
+private val FieldColor = Color(0xFF0F172A).copy(alpha = 0.6f)
 private val WhiteSoft = Color(0xFFF8FAFC)
-private val GrayText = Color(0xFFCBD5E1)
+private val GrayText = Color(0xFF94A3B8)
 private val BorderColor = Color(0xFF334155)
+
+private val ErrorRed = Color(0xFFEF4444)
+private val SuccessGreen = Color(0xFF10B981)
+
+private data class LoginParticle(
+    var x: Float,
+    var y: Float,
+    var radius: Float,
+    var alpha: Float,
+    val speedY: Float
+)
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LoginScreen(navController: NavController) {
 
     var isLogin by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val auth = FirebaseAuth.getInstance()
-
     val db = FirebaseFirestore.getInstance()
 
-    var errorMessage by remember {
-        mutableStateOf("")
-    }
-
-    var successMessage by remember {
-        mutableStateOf("")
-    }
+    var errorMessage by remember { mutableStateOf("") }
+    var successMessage by remember { mutableStateOf("") }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -79,37 +95,68 @@ fun LoginScreen(navController: NavController) {
     var regPassword by remember { mutableStateOf("") }
     var regConfirm by remember { mutableStateOf("") }
 
+    // Partículas ambientales de fondo
+    val particles = remember {
+        List(20) {
+            LoginParticle(
+                x = Random.nextFloat(),
+                y = Random.nextFloat(),
+                radius = Random.nextFloat() * 3f + 1.5f,
+                alpha = Random.nextFloat() * 0.4f + 0.1f,
+                speedY = Random.nextFloat() * 0.0008f + 0.0003f
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        BackgroundTop,
-                        BackgroundBottom
-                    )
+                    colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
     ) {
+        // Fondo de Partículas
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
 
+            particles.forEach { p ->
+                p.y -= p.speedY
+                if (p.y < 0f) p.y = 1f
+
+                drawCircle(
+                    color = PrimaryLight.copy(alpha = p.alpha),
+                    radius = p.radius.dp.toPx(),
+                    center = Offset(p.x * width, p.y * height)
+                )
+            }
+        }
+
+        // Resplandores ambientales
         Box(
             modifier = Modifier
-                .size(280.dp)
-                .offset(x = (-80).dp, y = (-40).dp)
+                .size(320.dp)
+                .offset(x = (-90).dp, y = (-50).dp)
                 .clip(CircleShape)
                 .background(
-                    Primary.copy(alpha = 0.18f)
+                    Brush.radialGradient(
+                        colors = listOf(PurpleGlow.copy(alpha = 0.3f), Color.Transparent)
+                    )
                 )
         )
 
         Box(
             modifier = Modifier
-                .size(240.dp)
+                .size(280.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 80.dp, y = 80.dp)
+                .offset(x = 90.dp, y = 90.dp)
                 .clip(CircleShape)
                 .background(
-                    PrimaryLight.copy(alpha = 0.12f)
+                    Brush.radialGradient(
+                        colors = listOf(Primary.copy(alpha = 0.25f), Color.Transparent)
+                    )
                 )
         )
 
@@ -117,22 +164,21 @@ fun LoginScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 42.dp),
+                .systemBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
+            // Logo de la Aplicación
             Box(
                 modifier = Modifier
-                    .size(90.dp)
-                    .shadow(20.dp, CircleShape)
+                    .size(88.dp)
+                    .shadow(24.dp, CircleShape, spotColor = Primary)
                     .background(
                         Brush.linearGradient(
-                            colors = listOf(
-                                Primary,
-                                PrimaryLight
-                            )
+                            colors = listOf(Primary, PrimaryLight)
                         ),
                         CircleShape
                     ),
@@ -141,61 +187,62 @@ fun LoginScreen(navController: NavController) {
                 Text(
                     text = "N",
                     color = Color.White,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 42.sp,
+                    fontWeight = FontWeight.ExtraBold
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = stringResource(R.string.app_name),
-                fontSize = 34.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = WhiteSoft
+                color = WhiteSoft,
+                letterSpacing = 0.5.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "Tu espacio inteligente para bienestar emocional",
                 color = GrayText,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 textAlign = TextAlign.Center,
-                lineHeight = 22.sp,
-                modifier = Modifier.padding(horizontal = 12.dp)
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(38.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Card(
+            // Tarjeta Contenedora Principal
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = CardColor.copy(alpha = 0.95f)
-                ),
-                shape = RoundedCornerShape(30.dp)
+                shape = RoundedCornerShape(30.dp),
+                color = CardColor,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
-
                 Column(
                     modifier = Modifier.padding(24.dp)
                 ) {
 
+                    // Tab Selector
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                FieldColor,
-                                RoundedCornerShape(18.dp)
-                            )
-                            .padding(6.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(FieldColor)
+                            .border(1.dp, BorderColor.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+                            .padding(4.dp)
                     ) {
-
                         LoginToggle(
                             text = stringResource(R.string.login_boton_tab),
                             selected = isLogin,
                             modifier = Modifier.weight(1f)
                         ) {
                             isLogin = true
+                            errorMessage = ""
+                            successMessage = ""
                         }
 
                         LoginToggle(
@@ -204,40 +251,84 @@ fun LoginScreen(navController: NavController) {
                             modifier = Modifier.weight(1f)
                         ) {
                             isLogin = false
+                            errorMessage = ""
+                            successMessage = ""
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
+                    // Mensajes de Alerta (Error)
                     if (errorMessage.isNotEmpty()) {
-                        Text(
-                            text = errorMessage,
-                            color = Color.Red,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = ErrorRed.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, ErrorRed.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = null,
+                                    tint = ErrorRed,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = errorMessage,
+                                    color = WhiteSoft,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
                     }
 
+                    // Mensajes de Alerta (Éxito)
                     if (successMessage.isNotEmpty()) {
-                        Text(
-                            text = successMessage,
-                            color = Color.Green,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = SuccessGreen.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = SuccessGreen,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = successMessage,
+                                    color = WhiteSoft,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
                     }
 
+                    // Formulario Animado
                     AnimatedContent(
                         targetState = isLogin,
                         transitionSpec = {
-                            (fadeIn() + scaleIn()) togetherWith
-                                    (fadeOut() + scaleOut())
+                            (fadeIn() + scaleIn()) togetherWith (fadeOut() + scaleOut())
                         },
                         label = "auth"
                     ) { login ->
 
                         if (login) {
-
                             Column {
-
                                 ModernField(
                                     value = email,
                                     onValueChange = { email = it },
@@ -245,7 +336,7 @@ fun LoginScreen(navController: NavController) {
                                     icon = Icons.Default.Email
                                 )
 
-                                Spacer(modifier = Modifier.height(18.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 ModernField(
                                     value = password,
@@ -261,77 +352,71 @@ fun LoginScreen(navController: NavController) {
                                     text = stringResource(R.string.login_olvide),
                                     color = PrimaryLight,
                                     fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
                                     modifier = Modifier
                                         .align(Alignment.End)
                                         .clickable(
                                             indication = null,
-                                            interactionSource = remember {
-                                                MutableInteractionSource()
-                                            }
+                                            interactionSource = remember { MutableInteractionSource() }
                                         ) {}
                                 )
 
-                                Spacer(modifier = Modifier.height(28.dp))
+                                Spacer(modifier = Modifier.height(24.dp))
 
                                 Button(
                                     onClick = {
-
                                         errorMessage = ""
                                         successMessage = ""
 
                                         if (email.isBlank() || password.isBlank()) {
-
                                             errorMessage = "Completa todos los campos"
                                             return@Button
                                         }
 
-                                        auth.signInWithEmailAndPassword(
-                                            email.trim(),
-                                            password
-                                        )
+                                        isLoading = true
+                                        auth.signInWithEmailAndPassword(email.trim(), password)
                                             .addOnSuccessListener {
-
-                                                successMessage =
-                                                    "Inicio de sesión exitoso"
-
-                                                val username =
-                                                    email.substringBefore("@")
-
+                                                isLoading = false
+                                                successMessage = "Inicio de sesión exitoso"
+                                                val username = email.substringBefore("@")
                                                 navController.navigate(
                                                     "onboarding/${username.replaceFirstChar { it.uppercase() }}"
                                                 ) {
-                                                    popUpTo("login") {
-                                                        inclusive = true
-                                                    }
+                                                    popUpTo("login") { inclusive = true }
                                                 }
                                             }
                                             .addOnFailureListener {
-
-                                                errorMessage =
-                                                    it.localizedMessage
-                                                        ?: "Error al iniciar sesión"
+                                                isLoading = false
+                                                errorMessage = it.localizedMessage ?: "Error al iniciar sesión"
                                             }
                                     },
+                                    enabled = !isLoading,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(58.dp),
+                                        .height(56.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Primary
                                     ),
-                                    shape = RoundedCornerShape(18.dp)
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                                 ) {
-                                    Text(
-                                        text = stringResource(R.string.login_boton),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    if (isLoading) {
+                                        CircularProgressIndicator(
+                                            color = Color.White,
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Text(
+                                            text = stringResource(R.string.login_boton),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
-
                         } else {
-
                             Column {
-
                                 ModernField(
                                     value = regName,
                                     onValueChange = { regName = it },
@@ -339,7 +424,7 @@ fun LoginScreen(navController: NavController) {
                                     icon = Icons.Default.Person
                                 )
 
-                                Spacer(modifier = Modifier.height(18.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 ModernField(
                                     value = regEmail,
@@ -348,7 +433,7 @@ fun LoginScreen(navController: NavController) {
                                     icon = Icons.Default.Email
                                 )
 
-                                Spacer(modifier = Modifier.height(18.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 ModernField(
                                     value = regPassword,
@@ -358,7 +443,7 @@ fun LoginScreen(navController: NavController) {
                                     isPassword = true
                                 )
 
-                                Spacer(modifier = Modifier.height(18.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 ModernField(
                                     value = regConfirm,
@@ -368,11 +453,10 @@ fun LoginScreen(navController: NavController) {
                                     isPassword = true
                                 )
 
-                                Spacer(modifier = Modifier.height(28.dp))
+                                Spacer(modifier = Modifier.height(24.dp))
 
                                 Button(
                                     onClick = {
-
                                         errorMessage = ""
                                         successMessage = ""
 
@@ -382,28 +466,22 @@ fun LoginScreen(navController: NavController) {
                                             regPassword.isBlank() ||
                                             regConfirm.isBlank()
                                         ) {
-
-                                            errorMessage =
-                                                "Completa todos los campos"
-
+                                            errorMessage = "Completa todos los campos"
                                             return@Button
                                         }
 
                                         if (regPassword != regConfirm) {
-
-                                            errorMessage =
-                                                "Las contraseñas no coinciden"
-
+                                            errorMessage = "Las contraseñas no coinciden"
                                             return@Button
                                         }
 
-                                        auth.createUserWithEmailAndPassword(
-                                            regEmail.trim(),
-                                            regPassword
-                                        )
+                                        isLoading = true
+                                        auth.createUserWithEmailAndPassword(regEmail.trim(), regPassword)
                                             .addOnSuccessListener {
-
-                                                val uid = auth.currentUser?.uid ?: return@addOnSuccessListener
+                                                val uid = auth.currentUser?.uid ?: run {
+                                                    isLoading = false
+                                                    return@addOnSuccessListener
+                                                }
 
                                                 val usuario = hashMapOf(
                                                     "nombre" to regName,
@@ -418,44 +496,47 @@ fun LoginScreen(navController: NavController) {
                                                     .document(uid)
                                                     .set(usuario)
                                                     .addOnSuccessListener {
-
-                                                        successMessage =
-                                                            "Cuenta creada correctamente"
-
+                                                        isLoading = false
+                                                        successMessage = "Cuenta creada correctamente"
                                                         navController.navigate(
                                                             "onboarding/${regName.replaceFirstChar { it.uppercase() }}"
                                                         ) {
-                                                            popUpTo("login") {
-                                                                inclusive = true
-                                                            }
+                                                            popUpTo("login") { inclusive = true }
                                                         }
                                                     }
                                                     .addOnFailureListener {
-
-                                                        errorMessage =
-                                                            "Usuario creado pero no se pudo guardar el perfil"
+                                                        isLoading = false
+                                                        errorMessage = "Usuario creado pero no se pudo guardar el perfil"
                                                     }
                                             }
                                             .addOnFailureListener {
-
-                                                errorMessage =
-                                                    it.localizedMessage
-                                                        ?: "Error al crear cuenta"
+                                                isLoading = false
+                                                errorMessage = it.localizedMessage ?: "Error al crear cuenta"
                                             }
                                     },
+                                    enabled = !isLoading,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(58.dp),
+                                        .height(56.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Primary
                                     ),
-                                    shape = RoundedCornerShape(18.dp)
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                                 ) {
-                                    Text(
-                                        text = stringResource(R.string.registro_boton),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    if (isLoading) {
+                                        CircularProgressIndicator(
+                                            color = Color.White,
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Text(
+                                            text = stringResource(R.string.registro_boton),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -463,49 +544,54 @@ fun LoginScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // Separador "O"
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
-                    color = BorderColor
+                    color = BorderColor.copy(alpha = 0.6f)
                 )
 
                 Text(
                     text = stringResource(R.string.login_o),
                     color = GrayText,
+                    fontSize = 13.sp,
                     modifier = Modifier.padding(horizontal = 14.dp)
                 )
 
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
-                    color = BorderColor
+                    color = BorderColor.copy(alpha = 0.6f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
+            // Botones de Inicio de Sesión Social
             SocialLoginButton(
                 text = stringResource(R.string.login_google),
                 icon = "G"
             ) {}
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             SocialLoginButton(
                 text = stringResource(R.string.login_apple),
                 icon = ""
             ) {}
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             SocialLoginButton(
                 text = stringResource(R.string.login_facebook),
                 icon = "f"
             ) {}
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -518,6 +604,7 @@ fun ModernField(
     icon: ImageVector,
     isPassword: Boolean = false
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
 
     OutlinedTextField(
         value = value,
@@ -526,32 +613,41 @@ fun ModernField(
         placeholder = {
             Text(
                 text = placeholder,
-                color = GrayText.copy(alpha = 0.7f)
+                color = GrayText.copy(alpha = 0.6f),
+                fontSize = 14.sp
             )
         },
         leadingIcon = {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = PrimaryLight
+                tint = PrimaryLight,
+                modifier = Modifier.size(20.dp)
             )
         },
-        visualTransformation = if (isPassword)
-            PasswordVisualTransformation()
-        else
-            VisualTransformation.None,
+        trailingIcon = {
+            if (isPassword) {
+                val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = image,
+                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = GrayText
+                    )
+                }
+            }
+        },
+        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
         singleLine = true,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = FieldColor,
             unfocusedContainerColor = FieldColor,
             focusedBorderColor = Primary,
-            unfocusedBorderColor = BorderColor,
+            unfocusedBorderColor = BorderColor.copy(alpha = 0.8f),
             focusedTextColor = WhiteSoft,
             unfocusedTextColor = WhiteSoft,
-            cursorColor = Primary,
-            focusedLeadingIconColor = Primary,
-            unfocusedLeadingIconColor = PrimaryLight
+            cursorColor = PrimaryLight
         )
     )
 }
@@ -563,21 +659,24 @@ fun LoginToggle(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(
-                if (selected) Primary else Color.Transparent
+                if (selected) {
+                    Brush.linearGradient(listOf(Primary, PrimaryLight))
+                } else {
+                    Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                }
             )
             .clickable { onClick() }
-            .padding(vertical = 14.dp),
+            .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = if (selected) Color.White else GrayText,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             fontSize = 14.sp
         )
     }
@@ -589,37 +688,31 @@ fun SocialLoginButton(
     icon: String,
     onClick: () -> Unit
 ) {
-
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(18.dp),
-        border = ButtonDefaults.outlinedButtonBorder.copy(
-            brush = Brush.horizontalGradient(
-                listOf(
-                    BorderColor,
-                    Primary.copy(alpha = 0.5f)
-                )
-            )
+            .height(52.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            BorderColor.copy(alpha = 0.8f)
         ),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = CardColor.copy(alpha = 0.9f),
+            containerColor = CardColor,
             contentColor = WhiteSoft
         )
     ) {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-
             Text(
                 text = icon,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                color = PrimaryLight,
                 modifier = Modifier.alpha(0.9f)
             )
 
@@ -628,7 +721,8 @@ fun SocialLoginButton(
             Text(
                 text = text,
                 fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                color = WhiteSoft
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.example.navhost1.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,64 +9,128 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.random.Random
 
+// Paleta NeuraBloom Dark Premium
 private val BackgroundTop = Color(0xFF0F172A)
-private val BackgroundBottom = Color(0xFF1E293B)
+private val BackgroundBottom = Color(0xFF090D16)
 
 private val Primary = Color(0xFF8B5CF6)
-private val PrimaryLight = Color(0xFFA78BFA)
+private val PrimaryLight = Color(0xFFC084FC)
+private val PurpleGlow = Color(0xFF6D28D9)
 
-private val CardColor = Color(0xFF111827)
-private val FieldColor = Color(0xFF1F2937)
-
+private val CardColor = Color(0xFF1E293B).copy(alpha = 0.75f)
+private val FieldColor = Color(0xFF0F172A).copy(alpha = 0.6f)
 private val WhiteSoft = Color(0xFFF8FAFC)
-private val GrayText = Color(0xFFCBD5E1)
+private val GrayText = Color(0xFF94A3B8)
 private val Danger = Color(0xFFEF4444)
+
+private data class ProfileParticle(
+    var x: Float,
+    var y: Float,
+    var radius: Float,
+    var alpha: Float,
+    val speedY: Float
+)
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
     username: String?
 ) {
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+
+    var userEmail by remember { mutableStateOf(auth.currentUser?.email ?: "correo@ejemplo.com") }
+    var userPhone by remember { mutableStateOf("+52 000 000 0000") }
+    var userBirthdate by remember { mutableStateOf("01 / 01 / 2000") }
+    var nombreCompleto by remember { mutableStateOf(username ?: "Usuario") }
+
+    // Cargar datos reales desde Firestore
+    LaunchedEffect(Unit) {
+        val uid = auth.currentUser?.uid ?: return@LaunchedEffect
+        db.collection("usuarios").document(uid).get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                nombreCompleto = document.getString("nombre") ?: (username ?: "Usuario")
+                userEmail = document.getString("email") ?: (auth.currentUser?.email ?: "correo@ejemplo.com")
+                userPhone = document.getString("telefono") ?: "+52 000 000 0000"
+                userBirthdate = document.getString("fechaNacimiento") ?: "01 / 01 / 2000"
+            }
+        }
+    }
+
+    // Partículas ambientales de fondo
+    val particles = remember {
+        List(20) {
+            ProfileParticle(
+                x = Random.nextFloat(),
+                y = Random.nextFloat(),
+                radius = Random.nextFloat() * 3f + 1.5f,
+                alpha = Random.nextFloat() * 0.4f + 0.1f,
+                speedY = Random.nextFloat() * 0.0008f + 0.0003f
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(
-                        BackgroundTop,
-                        BackgroundBottom
-                    )
+                    colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
     ) {
+        // Fondo de Partículas
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
 
+            particles.forEach { p ->
+                p.y -= p.speedY
+                if (p.y < 0f) p.y = 1f
+
+                drawCircle(
+                    color = PrimaryLight.copy(alpha = p.alpha),
+                    radius = p.radius.dp.toPx(),
+                    center = Offset(p.x * width, p.y * height)
+                )
+            }
+        }
+
+        // Resplandores Ambientales
         Box(
             modifier = Modifier
-                .size(340.dp)
+                .size(320.dp)
                 .offset(x = (-90).dp, y = (-60).dp)
                 .clip(CircleShape)
                 .background(
-                    Primary.copy(alpha = 0.10f)
+                    Brush.radialGradient(
+                        colors = listOf(PurpleGlow.copy(alpha = 0.25f), Color.Transparent)
+                    )
                 )
         )
 
@@ -73,92 +138,82 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 20.dp)
+                .systemBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
-
-            Spacer(modifier = Modifier.height(10.dp))
-
+            // Header Top
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 IconButton(
-                    onClick = {
-                        navController.popBackStack()
-                    }
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
                 ) {
-
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null,
-                        tint = WhiteSoft
+                    Text(
+                        text = "←",
+                        color = WhiteSoft,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
                     text = stringResource(R.string.profile_titulo),
                     color = WhiteSoft,
-                    fontSize = 24.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(26.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Card(
+            // Tarjeta de Perfil Principal
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(30.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = CardColor.copy(alpha = 0.96f)
-                )
+                shape = RoundedCornerShape(28.dp),
+                color = CardColor,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
-
                 Column(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
+                    // Avatar con Resplandor
                     Box(
                         modifier = Modifier
-                            .size(110.dp)
-                            .clip(CircleShape)
+                            .size(100.dp)
+                            .shadow(20.dp, CircleShape, spotColor = Primary)
                             .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        Primary,
-                                        PrimaryLight
-                                    )
-                                )
+                                Brush.linearGradient(listOf(Primary, PrimaryLight)),
+                                CircleShape
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(56.dp)
+                        Text(
+                            text = nombreCompleto.take(1).uppercase(),
+                            color = Color.White,
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = username ?: "Usuario",
+                        text = nombreCompleto,
                         color = WhiteSoft,
-                        fontSize = 24.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = null,
@@ -169,127 +224,112 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(6.dp))
 
                         Text(
-                            text = stringResource(R.string.profile_email),
+                            text = userEmail,
                             color = GrayText,
                             fontSize = 13.sp
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
+                    // Botón de Emergencias
                     Button(
-                        onClick = {
-                            navController.navigate("emergency")
-                        },
+                        onClick = { navController.navigate("emergency") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Danger
-                        )
+                            .height(52.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Danger),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                     ) {
-
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = Color.White
                         )
 
                         Spacer(modifier = Modifier.width(10.dp))
 
                         Text(
                             text = stringResource(R.string.profile_emergencias),
-                            fontWeight = FontWeight.Bold
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(26.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
+            // Campos de Datos Personales
             ProfileField(
                 label = stringResource(R.string.profile_nombre_usuario),
-                value = username ?: "Usuario",
+                value = nombreCompleto,
                 icon = Icons.Default.Person
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             ProfileField(
                 label = stringResource(R.string.profile_telefono),
-                value = "+52 000 000 0000",
+                value = userPhone,
                 icon = Icons.Default.Phone
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             ProfileField(
                 label = stringResource(R.string.profile_fe_na),
-                value = "01 / 01 / 2000",
-                icon = Icons.Default.Edit
+                value = userBirthdate,
+                icon = Icons.Default.CalendarToday
             )
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Card(
+            // Menú de Opciones
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = CardColor.copy(alpha = 0.96f)
-                )
+                shape = RoundedCornerShape(26.dp),
+                color = CardColor,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
             ) {
-
                 Column {
-
-                    OptionItem(
-                        title = stringResource(R.string.profile_planes)
-                    ) {
+                    OptionItem(title = stringResource(R.string.profile_planes)) {
                         navController.navigate("planes")
                     }
 
                     DividerDark()
 
-                    OptionItem(
-                        title = stringResource(R.string.profile_plan_actual)
-                    ) {
+                    OptionItem(title = stringResource(R.string.profile_plan_actual)) {
                         navController.navigate("premium")
                     }
 
                     DividerDark()
 
-                    OptionItem(
-                        title = stringResource(R.string.profile_configuracion)
-                    ) {
+                    OptionItem(title = stringResource(R.string.profile_configuracion)) {
                         navController.navigate("settings")
                     }
 
                     DividerDark()
 
-                    OptionItem(
-                        title = stringResource(R.string.profile_accesibilidad)
-                    )
+                    OptionItem(title = stringResource(R.string.profile_accesibilidad))
 
                     DividerDark()
 
-                    OptionItem(
-                        title = stringResource(R.string.profile_legal)
-                    ) {
+                    OptionItem(title = stringResource(R.string.profile_legal)) {
                         navController.navigate("legal")
                     }
 
                     DividerDark()
 
-                    OptionItem(
-                        title = stringResource(R.string.profile_privacidad)
-                    ) {
+                    OptionItem(title = stringResource(R.string.profile_privacidad)) {
                         navController.navigate("privacy")
                     }
 
                     DividerDark()
 
-                    OptionItem(
-                        title = stringResource(R.string.profile_soporte)
-                    ) {
+                    OptionItem(title = stringResource(R.string.profile_soporte)) {
                         navController.navigate("support")
                     }
 
@@ -299,12 +339,15 @@ fun ProfileScreen(
                         title = stringResource(R.string.profile_cerrar_sesion),
                         isDanger = true
                     ) {
-                        navController.navigate("logout")
+                        auth.signOut()
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -313,45 +356,43 @@ fun ProfileScreen(
 private fun ProfileField(
     label: String,
     value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: ImageVector
 ) {
-
     Column {
-
         Text(
             text = label,
             color = GrayText,
-            fontSize = 13.sp
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(FieldColor)
-                .padding(
-                    horizontal = 18.dp,
-                    vertical = 16.dp
-                ),
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            color = FieldColor,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = PrimaryLight,
+                    modifier = Modifier.size(20.dp)
+                )
 
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = PrimaryLight,
-                modifier = Modifier.size(20.dp)
-            )
+                Spacer(modifier = Modifier.width(12.dp))
 
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Text(
-                text = value,
-                color = WhiteSoft,
-                fontSize = 15.sp
-            )
+                Text(
+                    text = value,
+                    color = WhiteSoft,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }
@@ -362,47 +403,32 @@ private fun OptionItem(
     isDanger: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            }
-            .padding(
-                horizontal = 22.dp,
-                vertical = 18.dp
-            ),
+            .clickable { onClick() }
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
             text = title,
-            color =
-                if (isDanger)
-                    Danger
-                else
-                    WhiteSoft,
-            fontSize = 15.sp,
+            color = if (isDanger) Danger else WhiteSoft,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
         )
 
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint =
-                if (isDanger)
-                    Danger
-                else
-                    GrayText
+        Text(
+            text = "›",
+            color = if (isDanger) Danger else GrayText,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
 private fun DividerDark() {
-
     HorizontalDivider(
         color = Color.White.copy(alpha = 0.06f),
         thickness = 1.dp
