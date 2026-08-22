@@ -3,6 +3,7 @@ package com.example.navhost1.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,8 +20,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -30,9 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.navhost1.R
+import kotlin.random.Random
 
-private val BackgroundTop = Color(0xFF3B0A0A)
-private val BackgroundBottom = Color(0xFF7F1D1D)
+private val BackgroundTop = Color(0xFF2D0707)
+private val BackgroundBottom = Color(0xFF5B1111)
 
 private val EmergencyRed = Color(0xFFEF4444)
 private val EmergencyLight = Color(0xFFF87171)
@@ -40,46 +44,120 @@ private val EmergencyLight = Color(0xFFF87171)
 private val WhiteSoft = Color(0xFFF8FAFC)
 private val CardColor = Color(0xFFFFFFFF)
 
+private class EmergencySpark(
+    var x: Float = Random.nextFloat(),
+    var y: Float = Random.nextFloat(),
+    val size: Float = Random.nextFloat() * 2.5f + 1f,
+    val speedY: Float = Random.nextFloat() * 0.0006f + 0.0002f,
+    val isRed: Boolean = Random.nextBoolean()
+) {
+    fun update() {
+        y -= speedY
+        if (y < -0.05f) {
+            y = 1.05f
+            x = Random.nextFloat()
+        }
+    }
+}
+
 @Composable
 fun EmergencyScreen(navController: NavController) {
 
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    // Animación infinita para el pulso de las ondas de emergencia
+    val infiniteTransition = rememberInfiniteTransition(label = "emergencyBeacon")
 
-    val alphaAnim by infiniteTransition.animateFloat(
-        initialValue = 0.12f,
-        targetValue = 0.28f,
+    // Onda 1
+    val wave1Progress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800),
+            animation = tween(2400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wave1"
+    )
+
+    // Onda 2 (Desfasada)
+    val wave2Progress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2400, delayMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wave2"
+    )
+
+    // Respira del centro
+    val beaconPulse by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "alpha"
+        label = "beaconPulse"
     )
+
+    // Lista de chispas/puntos de luz flotantes
+    val sparks = remember { List(18) { EmergencySpark() } }
+
+    // Loop para refrescar la subida de los destellos
+    LaunchedEffect(wave1Progress) {
+        sparks.forEach { it.update() }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(
-                        BackgroundTop,
-                        BackgroundBottom
-                    )
+                    listOf(BackgroundTop, BackgroundBottom)
                 )
             )
     ) {
+        // Canvas de Animación de Ondas y Destellos de Emergencia
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val centerX = size.width / 2f
+            val centerY = size.height * 0.28f // Alineado visualmente cerca del icono central de alerta
+            val maxRadius = size.width * 0.85f
 
-        Box(
-            modifier = Modifier
-                .size(340.dp)
-                .offset(x = (-100).dp, y = (-80).dp)
-                .clip(CircleShape)
-                .background(
-                    EmergencyLight.copy(alpha = alphaAnim)
+            // 1. Dibujar Ondas Expansivas de Alerta
+            listOf(wave1Progress, wave2Progress).forEach { progress ->
+                val radius = maxRadius * progress
+                val alpha = (1f - progress).coerceIn(0f, 1f) * 0.45f
+
+                drawCircle(
+                    color = EmergencyLight.copy(alpha = alpha),
+                    radius = radius,
+                    center = Offset(centerX, centerY),
+                    style = Stroke(width = (3.dp * (1f - progress * 0.5f)).toPx())
                 )
-        )
+            }
+
+            // 2. Halo / Resplandor de baliza central
+            drawCircle(
+                color = EmergencyRed.copy(alpha = 0.18f),
+                radius = (140.dp * beaconPulse).toPx(),
+                center = Offset(centerX, centerY)
+            )
+
+            // 3. Dibujar Chispas / Destellos flotantes
+            sparks.forEach { spark ->
+                val px = spark.x * size.width
+                val py = spark.y * size.height
+                val color = if (spark.isRed) EmergencyLight.copy(alpha = 0.4f) else WhiteSoft.copy(alpha = 0.3f)
+
+                drawCircle(
+                    color = color,
+                    radius = spark.size.dp.toPx(),
+                    center = Offset(px, py)
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -98,11 +176,14 @@ fun EmergencyScreen(navController: NavController) {
                 IconButton(
                     onClick = {
                         navController.popBackStack()
-                    }
+                    },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null,
+                        contentDescription = "Volver",
                         tint = WhiteSoft
                     )
                 }
@@ -110,6 +191,7 @@ fun EmergencyScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Icono con resplandor central de la baliza
             Box(
                 modifier = Modifier
                     .size(110.dp)

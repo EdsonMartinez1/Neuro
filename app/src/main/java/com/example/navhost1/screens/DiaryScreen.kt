@@ -5,12 +5,17 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,6 +23,11 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.FormatStrikethrough
+import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,11 +36,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -58,7 +77,9 @@ private val PrimaryLight = Color(0xFFC084FC)
 private val PurpleGlow = Color(0xFF6D28D9)
 
 private val CardColor = Color(0xFF1E293B).copy(alpha = 0.75f)
-private val FieldColor = Color(0xFF0F172A).copy(alpha = 0.6f)
+private val NotebookPaperColor = Color(0xFF131C2E)
+private val NotebookLineColor = Color(0xFF334155).copy(alpha = 0.5f)
+private val NotebookMarginColor = Color(0xFFEF4444).copy(alpha = 0.35f)
 private val WhiteSoft = Color(0xFFF8FAFC)
 private val GrayText = Color(0xFF94A3B8)
 private val BorderColor = Color(0xFF334155)
@@ -132,14 +153,27 @@ suspend fun analizarDiarioConIA(texto: String): DiaryAIResponse? {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DiaryScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
 
     var entradas by remember { mutableStateOf<List<EntradaDiario>>(emptyList()) }
-    var text by remember { mutableStateOf(TextFieldValue("")) }
+    var textValue by remember { mutableStateOf(TextFieldValue("")) }
     var saved by remember { mutableStateOf(false) }
+
+    // Scroll state principal de la pantalla
+    val mainScrollState = rememberScrollState()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    // Estados de Formato de Texto
+    var fontSizeSp by remember { mutableStateOf(16) }
+    var isBold by remember { mutableStateOf(false) }
+    var isItalic by remember { mutableStateOf(false) }
+    var isUnderline by remember { mutableStateOf(false) }
+    var isStrikethrough by remember { mutableStateOf(false) }
 
     var respuestaIA by remember { mutableStateOf("") }
     var emocionIA by remember { mutableStateOf("") }
@@ -148,6 +182,27 @@ fun DiaryScreen(navController: NavController) {
     var analizandoIA by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
+
+    // Mantiene visible la línea exacta del cursor sin generar espacios extra fofos
+    LaunchedEffect(textValue.selection, textValue.text) {
+        textLayoutResult?.let { layout ->
+            val cursorOffset = textValue.selection.start
+            if (cursorOffset <= layout.layoutInput.text.length) {
+                val line = layout.getLineForOffset(cursorOffset)
+                val lineBottom = layout.getLineBottom(line)
+                val lineTop = layout.getLineTop(line)
+
+                bringIntoViewRequester.bringIntoView(
+                    Rect(
+                        left = 0f,
+                        top = lineTop,
+                        right = layout.size.width.toFloat(),
+                        bottom = lineBottom // Ajustado al límite exacto de la línea
+                    )
+                )
+            }
+        }
+    }
 
     // Partículas ambientales de fondo
     val particles = remember {
@@ -179,6 +234,44 @@ fun DiaryScreen(navController: NavController) {
                     )
                 }.reversed()
             }
+    }
+
+    fun toggleStyle(bold: Boolean = false, italic: Boolean = false, underline: Boolean = false, strikethrough: Boolean = false) {
+        val selection = textValue.selection
+        if (selection.collapsed) {
+            if (bold) isBold = !isBold
+            if (italic) isItalic = !isItalic
+            if (underline) isUnderline = !isUnderline
+            if (strikethrough) isStrikethrough = !isStrikethrough
+            return
+        }
+
+        val annotated = buildAnnotatedString {
+            append(textValue.text)
+            val styles = mutableListOf<TextDecoration>()
+            if (underline || isUnderline) styles.add(TextDecoration.Underline)
+            if (strikethrough || isStrikethrough) styles.add(TextDecoration.LineThrough)
+
+            val combinedDecoration = when {
+                styles.contains(TextDecoration.Underline) && styles.contains(TextDecoration.LineThrough) ->
+                    TextDecoration.combine(styles)
+                styles.contains(TextDecoration.Underline) -> TextDecoration.Underline
+                styles.contains(TextDecoration.LineThrough) -> TextDecoration.LineThrough
+                else -> null
+            }
+
+            addStyle(
+                style = SpanStyle(
+                    fontWeight = if (bold != isBold) FontWeight.Bold else FontWeight.Normal,
+                    fontStyle = if (italic != isItalic) FontStyle.Italic else FontStyle.Normal,
+                    textDecoration = combinedDecoration
+                ),
+                start = selection.min,
+                end = selection.max
+            )
+        }
+
+        textValue = textValue.copy(annotatedString = annotated)
     }
 
     Box(
@@ -223,8 +316,9 @@ fun DiaryScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .systemBarsPadding()
+                .imePadding()
+                .verticalScroll(mainScrollState)
                 .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
             // Header Top
@@ -287,15 +381,18 @@ fun DiaryScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Tarjeta de Entrada de Diario
+            // Tarjeta Estilo Cuaderno de Notas
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(24.dp),
                 color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
             ) {
-                Column(modifier = Modifier.padding(22.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Icon(
                             imageVector = Icons.Default.AutoStories,
                             contentDescription = null,
@@ -306,64 +403,197 @@ fun DiaryScreen(navController: NavController) {
                         Spacer(modifier = Modifier.width(10.dp))
 
                         Text(
-                            text = "Tu espacio seguro",
+                            text = "Mi Bloc de Notas",
                             color = WhiteSoft,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(
-                        text = "Escribe cómo te sientes hoy, qué piensas o qué deseas mejorar.",
-                        color = GrayText,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = {
-                            text = it
-                            saved = false
-                        },
-                        placeholder = {
-                            Text(
-                                text = stringResource(R.string.diario_subtitulo),
-                                color = GrayText.copy(alpha = 0.6f),
-                                fontSize = 14.sp
-                            )
-                        },
+                    // Barra de Formato de Texto
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(260.dp),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = FieldColor,
-                            unfocusedContainerColor = FieldColor,
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = BorderColor.copy(alpha = 0.8f),
-                            focusedTextColor = WhiteSoft,
-                            unfocusedTextColor = WhiteSoft,
-                            cursorColor = PrimaryLight
-                        )
-                    )
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.Black.copy(alpha = 0.3f))
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            // Bold
+                            IconButton(
+                                onClick = { toggleStyle(bold = true) },
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isBold) Primary.copy(alpha = 0.4f) else Color.Transparent)
+                            ) {
+                                Icon(Icons.Default.FormatBold, contentDescription = "Negrita", tint = WhiteSoft, modifier = Modifier.size(18.dp))
+                            }
+
+                            // Italic
+                            IconButton(
+                                onClick = { toggleStyle(italic = true) },
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isItalic) Primary.copy(alpha = 0.4f) else Color.Transparent)
+                            ) {
+                                Icon(Icons.Default.FormatItalic, contentDescription = "Cursiva", tint = WhiteSoft, modifier = Modifier.size(18.dp))
+                            }
+
+                            // Underline
+                            IconButton(
+                                onClick = { toggleStyle(underline = true) },
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isUnderline) Primary.copy(alpha = 0.4f) else Color.Transparent)
+                            ) {
+                                Icon(Icons.Default.FormatUnderlined, contentDescription = "Subrayado", tint = WhiteSoft, modifier = Modifier.size(18.dp))
+                            }
+
+                            // Strikethrough
+                            IconButton(
+                                onClick = { toggleStyle(strikethrough = true) },
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isStrikethrough) Primary.copy(alpha = 0.4f) else Color.Transparent)
+                            ) {
+                                Icon(Icons.Default.FormatStrikethrough, contentDescription = "Tachado", tint = WhiteSoft, modifier = Modifier.size(18.dp))
+                            }
+                        }
+
+                        // Selector de tamaño de letra
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(Icons.Default.FormatSize, contentDescription = "Tamaño", tint = GrayText, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            listOf(14, 16, 18).forEach { size ->
+                                Text(
+                                    text = "${size}sp",
+                                    fontSize = 11.sp,
+                                    fontWeight = if (fontSizeSp == size) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (fontSizeSp == size) PrimaryLight else GrayText,
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .clickable { fontSizeSp = size }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Hoja de Cuaderno Pautada
+                    val lineHeightPx = with(LocalDensity.current) { (fontSizeSp * 1.85f).sp.toPx() }
+                    val marginPaddingPx = with(LocalDensity.current) { 36.dp.toPx() }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 200.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(NotebookPaperColor)
+                            .border(1.dp, BorderColor.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                    ) {
+                        // Canvas dinámico para renglones
+                        Canvas(modifier = Modifier.matchParentSize()) {
+                            val canvasWidth = size.width
+                            val canvasHeight = size.height
+
+                            drawLine(
+                                color = NotebookMarginColor,
+                                start = Offset(marginPaddingPx, 0f),
+                                end = Offset(marginPaddingPx, canvasHeight),
+                                strokeWidth = 1.5f
+                            )
+
+                            var currentY = lineHeightPx
+                            while (currentY < canvasHeight) {
+                                drawLine(
+                                    color = NotebookLineColor,
+                                    start = Offset(0f, currentY),
+                                    end = Offset(canvasWidth, currentY),
+                                    strokeWidth = 1f
+                                )
+                                currentY += lineHeightPx
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 44.dp, end = 16.dp, top = 10.dp, bottom = 8.dp)
+                        ) {
+                            val decorations = mutableListOf<TextDecoration>()
+                            if (isUnderline) decorations.add(TextDecoration.Underline)
+                            if (isStrikethrough) decorations.add(TextDecoration.LineThrough)
+
+                            val activeDecoration = when {
+                                decorations.contains(TextDecoration.Underline) && decorations.contains(TextDecoration.LineThrough) ->
+                                    TextDecoration.combine(decorations)
+                                decorations.contains(TextDecoration.Underline) -> TextDecoration.Underline
+                                decorations.contains(TextDecoration.LineThrough) -> TextDecoration.LineThrough
+                                else -> TextDecoration.None
+                            }
+
+                            BasicTextField(
+                                value = textValue,
+                                onValueChange = {
+                                    textValue = it
+                                    saved = false
+                                },
+                                onTextLayout = { textLayoutResult = it },
+                                textStyle = TextStyle(
+                                    color = WhiteSoft,
+                                    fontSize = fontSizeSp.sp,
+                                    lineHeight = (fontSizeSp * 1.85f).sp,
+                                    fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+                                    fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal,
+                                    textDecoration = activeDecoration
+                                ),
+                                cursorBrush = SolidColor(PrimaryLight),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .defaultMinSize(minHeight = 180.dp)
+                                    .bringIntoViewRequester(bringIntoViewRequester),
+                                decorationBox = { innerTextField ->
+                                    if (textValue.text.isEmpty()) {
+                                        Text(
+                                            text = stringResource(R.string.diario_subtitulo),
+                                            color = GrayText.copy(alpha = 0.5f),
+                                            fontSize = fontSizeSp.sp,
+                                            lineHeight = (fontSizeSp * 1.85f).sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Button(
                         onClick = {
                             val uid = auth.currentUser?.uid
-                            if (uid != null && text.text.isNotBlank()) {
+                            val textoCompleto = textValue.text
+                            if (uid != null && textoCompleto.isNotBlank()) {
                                 analizandoIA = true
                                 respuestaIA = ""
-                                val textoEntrada = text.text
 
                                 scope.launch {
-                                    val resultadoIA = analizarDiarioConIA(textoEntrada)
+                                    val resultadoIA = analizarDiarioConIA(textoCompleto)
 
                                     if (resultadoIA == null) {
                                         analizandoIA = false
@@ -379,7 +609,7 @@ fun DiaryScreen(navController: NavController) {
                                     val ahora = System.currentTimeMillis()
 
                                     val diario = hashMapOf(
-                                        "texto" to textoEntrada,
+                                        "texto" to textoCompleto,
                                         "fecha" to ahora,
                                         "emocion" to resultadoIA.emotion,
                                         "intensidad" to resultadoIA.intensity,
@@ -423,7 +653,7 @@ fun DiaryScreen(navController: NavController) {
                                                 }
 
                                                 xpActual += 20
-                                                if (textoEntrada.length >= 200) xpActual += 10
+                                                if (textoCompleto.length >= 200) xpActual += 10
                                                 if (nuevaRacha == 3 || nuevaRacha == 7) xpActual += 50
 
                                                 val nuevoNivel = when {
@@ -455,14 +685,14 @@ fun DiaryScreen(navController: NavController) {
 
                                             entradas = listOf(
                                                 EntradaDiario(
-                                                    texto = textoEntrada,
+                                                    texto = textoCompleto,
                                                     fecha = ahora,
                                                     emocion = resultadoIA.emotion
                                                 )
                                             ) + entradas
 
                                             saved = true
-                                            text = TextFieldValue("")
+                                            textValue = TextFieldValue("")
                                         }
                                 }
                             }
@@ -668,7 +898,7 @@ fun DiaryScreen(navController: NavController) {
 
                             Text(
                                 text = entrada.texto,
-                                color = WhiteSoft,
+                                color = WhiteSoft.copy(alpha = 0.9f),
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp
                             )
