@@ -64,7 +64,7 @@ fun NavGraph(navController: NavHostController) {
 
         // 📊 ESTADÍSTICAS
         composable("estadisticas") {
-            EstadisticasScreen()
+            EstadisticasScreen(navController)
         }
 
         // 🌱 HÁBITOS
@@ -133,6 +133,10 @@ fun NavGraph(navController: NavHostController) {
         // ❓ FAQ
         composable("faq") {
             FaqScreen(navController)
+        }
+        // ⌚ CONTACTOS DE EMERGENCIA RELOJ
+        composable("emergency_contacts") {
+            EmergencyContactsScreen(navController)
         }
 
         // 🚪 CERRAR SESIÓN

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.TrendingDown
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.math.abs
@@ -65,7 +67,7 @@ private data class EmocionData(
 )
 
 @Composable
-fun EstadisticasScreen() {
+fun EstadisticasScreen(navController: NavHostController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
 
@@ -91,6 +93,12 @@ fun EstadisticasScreen() {
     var registrosSemanaAnterior by remember { mutableStateOf(0) }
     var intensidadPromedioSemanaAnterior by remember { mutableStateOf(0.0) }
 
+    // Variables para datos del reloj
+    var sesionesReloj    by remember { mutableStateOf(0) }
+    var crisisDetectadas by remember { mutableStateOf(0) }
+    var fcPromedio       by remember { mutableStateOf(0.0) }
+    var sosEnviados      by remember { mutableStateOf(0) }
+
     // Puntos mock simulados para el gráfico de líneas dinámico
     val puntosGrafico = remember(filtroSeleccionado, intensidadPromedio) {
         when (filtroSeleccionado) {
@@ -102,6 +110,7 @@ fun EstadisticasScreen() {
 
     LaunchedEffect(Unit) {
         val uid = auth.currentUser?.uid ?: return@LaunchedEffect
+        val baseRef = db.collection("usuarios").document(uid).collection("wearable")
 
         db.collection("usuarios")
             .document(uid)
@@ -194,6 +203,37 @@ fun EstadisticasScreen() {
                         }
                         habitosCompletadosSemana = completados
                     }
+            }
+        // Sesiones de respiración del reloj
+        // Sesiones de respiración — listener en tiempo real
+        baseRef.document("sesiones_respiracion")
+            .collection("registros")
+            .addSnapshotListener { snapshot, _ ->
+                sesionesReloj = snapshot?.size() ?: 0
+            }
+
+// Crisis detectadas — listener en tiempo real
+        baseRef.document("crisis")
+            .collection("registros")
+            .addSnapshotListener { snapshot, _ ->
+                crisisDetectadas = snapshot?.size() ?: 0
+            }
+
+// Alertas SOS — listener en tiempo real
+        baseRef.document("alertas_sos")
+            .collection("registros")
+            .addSnapshotListener { snapshot, _ ->
+                sosEnviados = snapshot?.size() ?: 0
+            }
+
+// FC promedio — listener en tiempo real
+        baseRef.document("biometria")
+            .collection("registros")
+            .whereEqualTo("tipo", "Frec. cardíaca")
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.size() > 0) {
+                    fcPromedio = snapshot.sumOf { it.getDouble("valor") ?: 0.0 } / snapshot.size()
+                }
             }
     }
 
@@ -661,7 +701,92 @@ fun EstadisticasScreen() {
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
 
+// Tarjeta de datos del reloj
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape    = RoundedCornerShape(26.dp),
+                color    = CardColor,
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+            ) {
+                Column(modifier = Modifier.padding(22.dp)) {
+                    Text(
+                        text       = "⌚ Datos del reloj",
+                        color      = PrimaryVioletLight,
+                        fontSize   = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            modifier = Modifier.weight(1f),
+                            icon     = "🫁",
+                            title    = "Respiraciones",
+                            value    = "$sesionesReloj",
+                            subtitle = "sesiones completadas"
+                        )
+                        StatCard(
+                            modifier = Modifier.weight(1f),
+                            icon     = "❤️",
+                            title    = "FC promedio",
+                            value    = "${fcPromedio.toInt()} bpm",
+                            subtitle = "frecuencia cardíaca"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            modifier = Modifier.weight(1f),
+                            icon     = "⚠️",
+                            title    = "Crisis",
+                            value    = "$crisisDetectadas",
+                            subtitle = "detectadas"
+                        )
+                        StatCard(
+                            modifier = Modifier.weight(1f),
+                            icon     = "🆘",
+                            title    = "SOS",
+                            value    = "$sosEnviados",
+                            subtitle = "alertas enviadas"
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = { navController.navigate("emergency_contacts") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryViolet.copy(alpha = 0.25f),
+                    contentColor   = PrimaryVioletLight
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryVioletLight.copy(alpha = 0.3f))
+            ) {
+                Icon(
+                    imageVector        = Icons.Default.PersonAdd,
+                    contentDescription = null,
+                    modifier           = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text       = "Contactos de emergencia",
+                    fontSize   = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             // RECOMENDACIÓN / CONSEJO
