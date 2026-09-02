@@ -6,11 +6,11 @@
         android:name="android.hardware.telephony"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-
 
     <application
         android:allowBackup="true"
@@ -21,11 +21,12 @@
         android:roundIcon="@mipmap/nbi_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NavHost1">
+
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="fullSensor"
             android:exported="true"
-            android:theme="@style/Theme.NavHost1.Splash">
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.NavHost1">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -43,6 +44,7 @@
                     android:pathPrefix="/" />
             </intent-filter>
         </service>
+
     </application>
 
 </manifest>

@@ -1,5 +1,7 @@
 package com.example.navhost1.navigation
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -10,14 +12,20 @@ import com.example.navhost1.screens.*
 fun NavGraph(navController: NavHostController) {
 
     NavHost(
-        navController  = navController,
-        startDestination = "login"        // ✅ Splash como pantalla inicial
+        navController = navController,
+        startDestination = "splash",
+        // 🌸 Transición de entrada suave para cualquier pantalla (Fade In)
+        enterTransition = { fadeIn(animationSpec = tween(500)) },
+        // 🌸 Transición de salida suave (Fade Out)
+        exitTransition = { fadeOut(animationSpec = tween(500)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(500)) },
+        popExitTransition = { fadeOut(animationSpec = tween(500)) }
     ) {
 
-        // ✨ SPLASH
-        //composable("splash") {
-            //SplashScreen(navController)
-        //}
+        // ✨ SPLASH SCREEN
+        composable("splash") {
+            SplashScreen(navController)
+        }
 
         // 🔐 LOGIN
         composable("login") {
@@ -72,7 +80,6 @@ fun NavGraph(navController: NavHostController) {
             HabitosScreen()
         }
 
-
         // 🎓 CONTENIDO
         composable("content") {
             ContentScreen(navController)
@@ -84,11 +91,25 @@ fun NavGraph(navController: NavHostController) {
         }
 
         // 🧘 SUB-HERRAMIENTAS
-        composable("breathing")  { BreathingScreen(navController) }
-        composable("meditation") { MeditationScreen(navController) }
-        composable("anxiety")    { AnxietyScreen(navController) }
-        composable("gratitude")  { GratitudeScreen(navController) }
-        composable("selfesteem") { SelfEsteemScreen(navController) }
+        composable("breathing") {
+            BreathingScreen(navController)
+        }
+
+        composable("meditation") {
+            MeditationScreen(navController)
+        }
+
+        composable("anxiety") {
+            AnxietyScreen(navController)
+        }
+
+        composable("gratitude") {
+            GratitudeScreen(navController)
+        }
+
+        composable("selfesteem") {
+            SelfEsteemScreen(navController)
+        }
 
         // 💎 PREMIUM
         composable("premium") {
@@ -134,6 +155,7 @@ fun NavGraph(navController: NavHostController) {
         composable("faq") {
             FaqScreen(navController)
         }
+
         // ⌚ CONTACTOS DE EMERGENCIA RELOJ
         composable("emergency_contacts") {
             EmergencyContactsScreen(navController)
