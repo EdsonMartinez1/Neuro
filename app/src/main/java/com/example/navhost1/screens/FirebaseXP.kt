@@ -1,7 +1,5 @@
 package com.example.navhost1.screens
 
-
-
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -32,15 +30,6 @@ fun registrarUsoHerramienta(
             ref,
             "herramientas.$herramienta",
             herramientas + 1
-        )
-
-        val xp =
-            snapshot.getLong("xp") ?: 0
-
-        transaction.update(
-            ref,
-            "xp",
-            xp + 10
         )
     }
 }

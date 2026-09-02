@@ -148,6 +148,58 @@ suspend fun enviarMensajeAlChat(mensaje: String): String? {
     }
 }
 
+suspend fun obtenerRecomendacionMeditacion(
+    estadoEmocional: String
+): String? {
+
+    return enviarMensajeAlChat(
+        """
+Estoy usando la herramienta de meditación de NeuraBloom.
+
+El usuario indica que actualmente se siente: $estadoEmocional
+
+Debes recomendar una configuración personalizada para su sesión de meditación.
+
+Debes elegir:
+
+1. DURACION:
+Solo puede ser 1, 3 o 5 minutos.
+
+2. AMBIENTE:
+Solo puede ser uno de estos valores:
+lluvia
+mar
+viento
+bosque
+
+3. VOLUMEN_AMBIENTE:
+Un número entero entre 0 y 100.
+
+4. VOZ:
+Un número entero entre 0 y 100.
+
+La recomendación debe priorizar una experiencia tranquila y apropiada para el estado emocional indicado.
+
+IMPORTANTE:
+Las primeras cuatro líneas de tu respuesta DEBEN tener exactamente este formato:
+
+DURACION:3
+AMBIENTE:lluvia
+VOLUMEN_AMBIENTE:25
+VOZ:100
+
+Reemplaza los valores según consideres más adecuados.
+
+Después de esas cuatro líneas, escribe una explicación breve,
+cálida y tranquilizadora de por qué recomiendas esa configuración.
+
+No hagas diagnósticos médicos.
+No agregues otros parámetros.
+No utilices porcentajes con el símbolo % en las primeras cuatro líneas.
+""".trimIndent()
+    )
+}
+
 suspend fun cargarHistorialChat(uid: String): List<Message> {
     val db = FirebaseFirestore.getInstance()
 

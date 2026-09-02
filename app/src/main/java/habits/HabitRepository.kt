@@ -144,9 +144,18 @@ class HabitRepository {
                         val habit =
                             documento.toObject(Habit::class.java)
 
+                        val completadoFirebase =
+                            documento.getBoolean("completado") ?: false
+
+                        val fechaXP =
+                            documento.getLong("fechaXP") ?: 0L
+
+                        val completadoHoy =
+                            completadoFirebase && esHoy(fechaXP)
+
                         habit.copy(
                             id = documento.id,
-                            completado = documento.getBoolean("completado") ?: false
+                            completado = completadoHoy
                         )
                     }
 

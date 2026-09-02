@@ -1,17 +1,23 @@
 package com.example.navhost1.screens
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,11 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,7 +58,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.random.Random
 
-// Paleta NeuraBloom Dark Premium
+// Paleta NeuraBloom Dark Premium Refinada
 private val BackgroundTop = Color(0xFF0F172A)
 private val BackgroundBottom = Color(0xFF090D16)
 
@@ -57,8 +66,10 @@ private val Primary = Color(0xFF8B5CF6)
 private val PrimaryLight = Color(0xFFC084FC)
 private val PurpleGlow = Color(0xFF6D28D9)
 
-private val CardColor = Color(0xFF1E293B).copy(alpha = 0.75f)
-private val FieldColor = Color(0xFF0F172A).copy(alpha = 0.6f)
+// Tarjetas con alta legibilidad y opacidad sólida
+private val CardSolid = Color(0xFF1E293B)
+private val FieldColor = Color(0xFF0F172A)
+
 private val WhiteSoft = Color(0xFFF8FAFC)
 private val GrayText = Color(0xFF94A3B8)
 private val BorderColor = Color(0xFF334155)
@@ -83,6 +94,7 @@ fun LoginScreen(navController: NavController) {
 
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+    val haptic = LocalHapticFeedback.current
 
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
@@ -97,13 +109,13 @@ fun LoginScreen(navController: NavController) {
 
     // Partículas ambientales de fondo
     val particles = remember {
-        List(20) {
+        List(25) {
             LoginParticle(
                 x = Random.nextFloat(),
                 y = Random.nextFloat(),
-                radius = Random.nextFloat() * 3f + 1.5f,
-                alpha = Random.nextFloat() * 0.4f + 0.1f,
-                speedY = Random.nextFloat() * 0.0008f + 0.0003f
+                radius = Random.nextFloat() * 3.5f + 1.5f,
+                alpha = Random.nextFloat() * 0.4f + 0.12f,
+                speedY = Random.nextFloat() * 0.0007f + 0.0002f
             )
         }
     }
@@ -117,7 +129,7 @@ fun LoginScreen(navController: NavController) {
                 )
             )
     ) {
-        // Fondo de Partículas
+        // Fondo de Partículas Zen
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
             val height = size.height
@@ -134,28 +146,28 @@ fun LoginScreen(navController: NavController) {
             }
         }
 
-        // Resplandores ambientales
+        // Resplandores ambientales superiores e inferiores
         Box(
             modifier = Modifier
-                .size(320.dp)
+                .size(340.dp)
                 .offset(x = (-90).dp, y = (-50).dp)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(PurpleGlow.copy(alpha = 0.3f), Color.Transparent)
+                        colors = listOf(PurpleGlow.copy(alpha = 0.35f), Color.Transparent)
                     )
                 )
         )
 
         Box(
             modifier = Modifier
-                .size(280.dp)
+                .size(300.dp)
                 .align(Alignment.BottomEnd)
                 .offset(x = 90.dp, y = 90.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Primary.copy(alpha = 0.25f), Color.Transparent)
+                        colors = listOf(Primary.copy(alpha = 0.28f), Color.Transparent)
                     )
                 )
         )
@@ -174,8 +186,8 @@ fun LoginScreen(navController: NavController) {
             // Logo de la Aplicación
             Box(
                 modifier = Modifier
-                    .size(88.dp)
-                    .shadow(24.dp, CircleShape, spotColor = Primary)
+                    .size(92.dp)
+                    .shadow(28.dp, CircleShape, spotColor = Primary)
                     .background(
                         Brush.linearGradient(
                             colors = listOf(Primary, PrimaryLight)
@@ -187,7 +199,7 @@ fun LoginScreen(navController: NavController) {
                 Text(
                     text = "N",
                     color = Color.White,
-                    fontSize = 42.sp,
+                    fontSize = 44.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
             }
@@ -215,12 +227,17 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Tarjeta Contenedora Principal
+            // Tarjeta Contenedora Principal Sólida Glassmorphic
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(30.dp),
-                color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                color = CardSolid,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    Brush.linearGradient(
+                        listOf(PrimaryLight.copy(alpha = 0.4f), Color.Transparent)
+                    )
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp)
@@ -232,7 +249,7 @@ fun LoginScreen(navController: NavController) {
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(18.dp))
                             .background(FieldColor)
-                            .border(1.dp, BorderColor.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+                            .border(1.dp, BorderColor, RoundedCornerShape(18.dp))
                             .padding(4.dp)
                     ) {
                         LoginToggle(
@@ -240,6 +257,7 @@ fun LoginScreen(navController: NavController) {
                             selected = isLogin,
                             modifier = Modifier.weight(1f)
                         ) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             isLogin = true
                             errorMessage = ""
                             successMessage = ""
@@ -250,6 +268,7 @@ fun LoginScreen(navController: NavController) {
                             selected = !isLogin,
                             modifier = Modifier.weight(1f)
                         ) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             isLogin = false
                             errorMessage = ""
                             successMessage = ""
@@ -258,8 +277,12 @@ fun LoginScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Mensajes de Alerta (Error)
-                    if (errorMessage.isNotEmpty()) {
+                    // Mensajes de Alerta Animados (Error)
+                    AnimatedVisibility(
+                        visible = errorMessage.isNotEmpty(),
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -288,8 +311,12 @@ fun LoginScreen(navController: NavController) {
                         }
                     }
 
-                    // Mensajes de Alerta (Éxito)
-                    if (successMessage.isNotEmpty()) {
+                    // Mensajes de Alerta Animados (Éxito)
+                    AnimatedVisibility(
+                        visible = successMessage.isNotEmpty(),
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -358,19 +385,22 @@ fun LoginScreen(navController: NavController) {
                                         .clickable(
                                             indication = null,
                                             interactionSource = remember { MutableInteractionSource() }
-                                        ) {}
+                                        ) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        }
                                 )
 
                                 Spacer(modifier = Modifier.height(24.dp))
 
-                                Button(
+                                AnimatedScaleButton(
                                     onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         errorMessage = ""
                                         successMessage = ""
 
                                         if (email.isBlank() || password.isBlank()) {
                                             errorMessage = "Completa todos los campos"
-                                            return@Button
+                                            return@AnimatedScaleButton
                                         }
 
                                         isLoading = true
@@ -393,12 +423,7 @@ fun LoginScreen(navController: NavController) {
                                     enabled = !isLoading,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(56.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Primary
-                                    ),
-                                    shape = RoundedCornerShape(16.dp),
-                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                                        .height(56.dp)
                                 ) {
                                     if (isLoading) {
                                         CircularProgressIndicator(
@@ -410,7 +435,8 @@ fun LoginScreen(navController: NavController) {
                                         Text(
                                             text = stringResource(R.string.login_boton),
                                             fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Bold,
+                                            color = WhiteSoft
                                         )
                                     }
                                 }
@@ -455,8 +481,9 @@ fun LoginScreen(navController: NavController) {
 
                                 Spacer(modifier = Modifier.height(24.dp))
 
-                                Button(
+                                AnimatedScaleButton(
                                     onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         errorMessage = ""
                                         successMessage = ""
 
@@ -467,12 +494,12 @@ fun LoginScreen(navController: NavController) {
                                             regConfirm.isBlank()
                                         ) {
                                             errorMessage = "Completa todos los campos"
-                                            return@Button
+                                            return@AnimatedScaleButton
                                         }
 
                                         if (regPassword != regConfirm) {
                                             errorMessage = "Las contraseñas no coinciden"
-                                            return@Button
+                                            return@AnimatedScaleButton
                                         }
 
                                         isLoading = true
@@ -517,12 +544,7 @@ fun LoginScreen(navController: NavController) {
                                     enabled = !isLoading,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(56.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Primary
-                                    ),
-                                    shape = RoundedCornerShape(16.dp),
-                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                                        .height(56.dp)
                                 ) {
                                     if (isLoading) {
                                         CircularProgressIndicator(
@@ -534,7 +556,8 @@ fun LoginScreen(navController: NavController) {
                                         Text(
                                             text = stringResource(R.string.registro_boton),
                                             fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Bold,
+                                            color = WhiteSoft
                                         )
                                     }
                                 }
@@ -575,21 +598,27 @@ fun LoginScreen(navController: NavController) {
             SocialLoginButton(
                 text = stringResource(R.string.login_google),
                 icon = "G"
-            ) {}
+            ) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             SocialLoginButton(
                 text = stringResource(R.string.login_apple),
                 icon = ""
-            ) {}
+            ) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             SocialLoginButton(
                 text = stringResource(R.string.login_facebook),
                 icon = "f"
-            ) {}
+            ) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -643,8 +672,8 @@ fun ModernField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = FieldColor,
             unfocusedContainerColor = FieldColor,
-            focusedBorderColor = Primary,
-            unfocusedBorderColor = BorderColor.copy(alpha = 0.8f),
+            focusedBorderColor = PrimaryLight,
+            unfocusedBorderColor = BorderColor,
             focusedTextColor = WhiteSoft,
             unfocusedTextColor = WhiteSoft,
             cursorColor = PrimaryLight
@@ -683,23 +712,63 @@ fun LoginToggle(
 }
 
 @Composable
+fun AnimatedScaleButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(150),
+        label = "buttonScale"
+    )
+
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        modifier = modifier.scale(scale),
+        colors = ButtonDefaults.buttonColors(containerColor = Primary),
+        shape = RoundedCornerShape(16.dp),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
 fun SocialLoginButton(
     text: String,
     icon: String,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(150),
+        label = "socialScale"
+    )
+
     OutlinedButton(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(52.dp)
+            .scale(scale),
         shape = RoundedCornerShape(16.dp),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            BorderColor.copy(alpha = 0.8f)
+            BorderColor
         ),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = CardColor,
+            containerColor = CardSolid,
             contentColor = WhiteSoft
         )
     ) {

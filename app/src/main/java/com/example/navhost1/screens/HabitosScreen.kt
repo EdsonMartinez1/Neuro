@@ -1,6 +1,7 @@
 package com.example.navhost1.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,7 +53,10 @@ private val Primary = Color(0xFF8B5CF6)
 private val PrimaryLight = Color(0xFFC084FC)
 private val PurpleGlow = Color(0xFF6D28D9)
 
-private val CardColor = Color(0xFF1E293B).copy(alpha = 0.75f)
+// Colores de Tarjeta y Modales (Sólidos y legibles)
+private val CardColor = Color(0xFF1E293B).copy(alpha = 0.85f)
+private val CardColorSolid = Color(0xFF1E293B) // Fondo 100% opaco para Modales
+private val FieldColor = Color(0xFF0F172A)     // Fondo de text fields e inputs
 private val CardSecondary = Color(0xFF0F172A).copy(alpha = 0.6f)
 
 private val WhiteSoft = Color(0xFFF8FAFC)
@@ -132,15 +137,22 @@ suspend fun analizarHabitosConIA(
 
 @Composable
 fun HabitosScreen() {
+
     val auth = FirebaseAuth.getInstance()
     val repository = remember { HabitRepository() }
     val db = FirebaseFirestore.getInstance()
     val scope = rememberCoroutineScope()
 
+    val context = LocalContext.current
+
     var habitos by remember { mutableStateOf<List<Habit>>(emptyList()) }
     var cargando by remember { mutableStateOf(true) }
     var xpUsuario by remember { mutableStateOf(0L) }
     var rachaHabitos by remember { mutableStateOf(0) }
+
+    var recomendacionAutomaticaIA by remember {
+        mutableStateOf<HabitRecommendation?>(null)
+    }
 
     var mostrarCrearHabit by remember { mutableStateOf(false) }
     var mostrarIA by remember { mutableStateOf(false) }
@@ -176,28 +188,106 @@ fun HabitosScreen() {
     }
 
     LaunchedEffect(Unit) {
+
         val uid = auth.currentUser?.uid
+
         if (uid != null) {
-            db.collection("usuarios")
-                .document(uid)
-                .get()
-                .addOnSuccessListener { documento ->
-                    xpUsuario = documento.getLong("xp") ?: 0L
-                    rachaHabitos = documento.getLong("rachaHabitos")?.toInt() ?: 0
-                }
+
+            auth.currentUser?.uid?.let { usuarioId ->
+
+                FirebaseFirestore
+                    .getInstance()
+                    .collection("usuarios")
+                    .document(usuarioId)
+                    .get()
+                    .addOnSuccessListener { documento ->
+
+                        xpUsuario =
+                            documento.getLong("xp") ?: 0L
+
+                        rachaHabitos =
+                            documento.getLong("rachaHabitos")?.toInt() ?: 0
+                    }
+            }
 
             repository.obtenerHabitos(
+
                 uid = uid,
+
                 onSuccess = { lista ->
+
                     habitos = lista
                     cargando = false
+
+                    scope.launch {
+
+                        try {
+
+                            val contextoHabitos =
+                                lista.joinToString("\n") { habit ->
+
+                                    "- ${habit.nombre} " +
+                                            "(${habit.categoria}): " +
+                                            "${habit.descripcion}. " +
+                                            "Completado: ${habit.completado}"
+                                }
+
+                            val resultadoIA =
+                                analizarHabitosConIA(
+
+                                    objetivo = """
+                                    Analiza los patrones actuales de los hábitos
+                                    del usuario.
+
+                                    Recomienda UN SOLO hábito nuevo que pueda
+                                    complementar sus hábitos actuales y contribuir
+                                    a mejorar su bienestar.
+
+                                    No recomiendes un hábito que ya exista.
+
+                                    La recomendación debe ser sencilla,
+                                    realista y fácil de incorporar.
+                                """.trimIndent(),
+
+                                    habitos = contextoHabitos,
+
+                                    diario = "",
+
+                                    chat = ""
+                                )
+
+                            recomendacionAutomaticaIA =
+                                resultadoIA
+                                    ?.recommendations
+                                    ?.firstOrNull()
+
+                        } catch (e: Exception) {
+
+                            Log.e(
+                                "HABITOS_IA",
+                                "Error al generar recomendación automática",
+                                e
+                            )
+
+                            recomendacionAutomaticaIA = null
+                        }
+                    }
                 },
-                onError = { error ->
+
+                onError = { error: Exception ->
+
                     cargando = false
-                    Log.e("HABITOS", "Error al obtener hábitos: ${error.message}")
+
+                    Log.e(
+                        "HABITOS",
+                        "Error al obtener hábitos: ${error.message}",
+                        error
+                    )
                 }
             )
+
         } else {
+
             cargando = false
         }
     }
@@ -296,7 +386,8 @@ fun HabitosScreen() {
 
             val habitosCompletados = habitos.count { it.completado }
             val totalHabitos = habitos.size
-            val progresoHabitos = if (totalHabitos > 0) habitosCompletados.toFloat() / totalHabitos.toFloat() else 0f
+            val progresoHabitos =
+                if (totalHabitos > 0) habitosCompletados.toFloat() / totalHabitos.toFloat() else 0f
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -305,7 +396,10 @@ fun HabitosScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    Color.White.copy(alpha = 0.12f)
+                )
             ) {
                 Column(modifier = Modifier.padding(22.dp)) {
                     Text(
@@ -443,14 +537,25 @@ fun HabitosScreen() {
                             errorCrearHabit = null
                         }
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary),
                     shape = RoundedCornerShape(16.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Nuevo", color = WhiteSoft, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Nuevo",
+                        color = WhiteSoft,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 Button(
@@ -458,18 +563,173 @@ fun HabitosScreen() {
                         objetivoIA = ""
                         mostrarIA = true
                     },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = CardColor),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CardColorSolid),
                     shape = RoundedCornerShape(16.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryLight.copy(alpha = 0.4f))
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        PrimaryLight.copy(alpha = 0.5f)
+                    )
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = PrimaryLight, modifier = Modifier.size(18.dp))
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = PrimaryLight,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Con IA", color = PrimaryLight, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Con IA",
+                        color = PrimaryLight,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Recomendación automática de NeuraBloom IA
+            if (recomendacionAutomaticaIA != null) {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = CardColorSolid,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.5.dp,
+                        PrimaryLight.copy(alpha = 0.5f)
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = PrimaryLight,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Recomendación de NeuraBloom IA",
+                                color = PrimaryLight,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = recomendacionAutomaticaIA!!.nombre,
+                            color = WhiteSoft,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = recomendacionAutomaticaIA!!.categoria,
+                            color = PrimaryLight,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = recomendacionAutomaticaIA!!.descripcion,
+                            color = GrayText,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Esta recomendación fue generada analizando tus hábitos actuales.",
+                            color = GrayText.copy(alpha = 0.7f),
+                            fontSize = 11.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Button(
+                            onClick = {
+                                val uid = auth.currentUser?.uid ?: return@Button
+                                val recomendacion = recomendacionAutomaticaIA
+
+                                if (recomendacion != null) {
+                                    repository.crearHabit(
+                                        uid = uid,
+                                        nombre = recomendacion.nombre,
+                                        categoria = recomendacion.categoria,
+                                        descripcion = recomendacion.descripcion,
+                                        xp = 10,
+                                        generadoPorIA = true,
+
+                                        onSuccess = {
+                                            Toast.makeText(
+                                                context,
+                                                "✨ Hábito agregado correctamente",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+
+                                            recomendacionAutomaticaIA = null
+
+                                            repository.obtenerHabitos(
+                                                uid = uid,
+                                                onSuccess = { lista ->
+                                                    habitos = lista
+                                                },
+                                                onError = { error ->
+                                                    Log.e(
+                                                        "HABITOS",
+                                                        "Error al actualizar hábitos",
+                                                        error
+                                                    )
+                                                }
+                                            )
+                                        },
+
+                                        onError = { error ->
+                                            Toast.makeText(
+                                                context,
+                                                "No se pudo agregar el hábito",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+
+                                            Log.e(
+                                                "HABITOS_IA",
+                                                "Error al agregar hábito",
+                                                error
+                                            )
+                                        }
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                        ) {
+                            Text(
+                                text = "Agregar hábito",
+                                fontWeight = FontWeight.Bold,
+                                color = WhiteSoft
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Tus hábitos",
@@ -494,8 +754,11 @@ fun HabitosScreen() {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(22.dp),
-                    color = CardColor,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                    color = CardColorSolid,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        Color.White.copy(alpha = 0.1f)
+                    )
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
@@ -527,10 +790,12 @@ fun HabitosScreen() {
                             .fillMaxWidth()
                             .padding(vertical = 6.dp),
                         shape = RoundedCornerShape(22.dp),
-                        color = if (habit.completado) Color(0xFF10B981).copy(alpha = 0.12f) else CardColor,
+                        color = if (habit.completado) Color(0xFF10B981).copy(alpha = 0.15f) else CardColorSolid,
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
-                            if (habit.completado) Color(0xFF10B981).copy(alpha = 0.3f) else Color.White.copy(alpha = 0.08f)
+                            if (habit.completado) Color(0xFF10B981).copy(alpha = 0.4f) else Color.White.copy(
+                                alpha = 0.1f
+                            )
                         )
                     ) {
                         Row(
@@ -544,7 +809,7 @@ fun HabitosScreen() {
                                     .size(48.dp)
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(
-                                        if (habit.completado) Color(0xFF10B981).copy(alpha = 0.2f) else CardSecondary
+                                        if (habit.completado) Color(0xFF10B981).copy(alpha = 0.25f) else FieldColor
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -589,17 +854,25 @@ fun HabitosScreen() {
 
                                         DropdownMenu(
                                             expanded = mostrarMenuHabit && habitSeleccionado?.id == habit.id,
-                                            onDismissRequest = { mostrarMenuHabit = false }
+                                            onDismissRequest = { mostrarMenuHabit = false },
+                                            modifier = Modifier.background(CardColorSolid)
                                         ) {
                                             DropdownMenuItem(
-                                                text = { Text("Editar") },
-                                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                                text = { Text("Editar", color = WhiteSoft) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Edit,
+                                                        contentDescription = null,
+                                                        tint = PrimaryLight
+                                                    )
+                                                },
                                                 onClick = {
                                                     mostrarMenuHabit = false
                                                     habitSeleccionado = habit
                                                     nombreNuevoHabit = habit.nombre
                                                     categoriaNuevoHabit = habit.categoria
-                                                    descripcionNuevoHabit = habit.descripcion
+                                                    descripcionNuevoHabit =
+                                                        habit.descripcion
                                                     errorCrearHabit = null
                                                     editandoHabit = true
                                                     mostrarCrearHabit = true
@@ -607,8 +880,19 @@ fun HabitosScreen() {
                                             )
 
                                             DropdownMenuItem(
-                                                text = { Text("Eliminar", color = Color(0xFFEF4444)) },
-                                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF4444)) },
+                                                text = {
+                                                    Text(
+                                                        "Eliminar",
+                                                        color = Color(0xFFEF4444)
+                                                    )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Delete,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFFEF4444)
+                                                    )
+                                                },
                                                 onClick = {
                                                     mostrarMenuHabit = false
                                                     habitSeleccionado = habit
@@ -651,10 +935,17 @@ fun HabitosScreen() {
                                                 habitId = habit.id,
                                                 onSuccess = {
                                                     habitos = habitos.map {
-                                                        if (it.id == habit.id) it.copy(completado = true) else it
+                                                        if (it.id == habit.id) it.copy(
+                                                            completado = true
+                                                        ) else it
                                                     }
                                                 },
-                                                onError = { Log.e("HABITOS", "Error al completar: ${it.message}") }
+                                                onError = {
+                                                    Log.e(
+                                                        "HABITOS",
+                                                        "Error al completar: ${it.message}"
+                                                    )
+                                                }
                                             )
                                         } else {
                                             repository.descompletarHabit(
@@ -662,15 +953,27 @@ fun HabitosScreen() {
                                                 habitId = habit.id,
                                                 onSuccess = {
                                                     habitos = habitos.map {
-                                                        if (it.id == habit.id) it.copy(completado = false) else it
+                                                        if (it.id == habit.id) it.copy(
+                                                            completado = false
+                                                        ) else it
                                                     }
-                                                    db.collection("usuarios").document(uid).get()
+                                                    db.collection("usuarios").document(uid)
+                                                        .get()
                                                         .addOnSuccessListener { doc ->
-                                                            xpUsuario = doc.getLong("xp") ?: xpUsuario
-                                                            rachaHabitos = doc.getLong("rachaHabitos")?.toInt() ?: rachaHabitos
+                                                            xpUsuario = doc.getLong("xp")
+                                                                ?: xpUsuario
+                                                            rachaHabitos =
+                                                                doc.getLong("rachaHabitos")
+                                                                    ?.toInt()
+                                                                    ?: rachaHabitos
                                                         }
                                                 },
-                                                onError = { Log.e("HABITOS", "Error al descompletar: ${it.message}") }
+                                                onError = {
+                                                    Log.e(
+                                                        "HABITOS",
+                                                        "Error al descompletar: ${it.message}"
+                                                    )
+                                                }
                                             )
                                         }
                                     }
@@ -688,14 +991,17 @@ fun HabitosScreen() {
         }
     }
 
-    // Modal Crear/Editar Hábito
+    // Modal Crear/Editar Hábito Rediseñado (Sólido)
     if (mostrarCrearHabit) {
         AlertDialog(
             onDismissRequest = { if (!creandoHabit) mostrarCrearHabit = false },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = CardColorSolid,
             title = {
                 Text(
                     text = if (editandoHabit) "Editar hábito ✏️" else "Nuevo hábito 🌱",
                     color = WhiteSoft,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -708,23 +1014,26 @@ fun HabitosScreen() {
                             errorCrearHabit = null
                         },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = FieldColor,
+                            unfocusedContainerColor = FieldColor,
                             focusedTextColor = WhiteSoft,
                             unfocusedTextColor = WhiteSoft,
                             focusedBorderColor = PrimaryLight,
                             unfocusedBorderColor = BorderColor,
                             cursorColor = PrimaryLight
                         ),
-                        label = { Text("Nombre") },
-                        placeholder = { Text("Ej. Leer 10 páginas") },
+                        label = { Text("Nombre", color = GrayText) },
+                        placeholder = { Text("Ej. Leer 10 páginas", color = GrayText.copy(alpha = 0.5f)) },
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = "Categoría", color = GrayText, fontSize = 12.sp)
+                    Text(text = "Categoría", color = WhiteSoft, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -736,7 +1045,13 @@ fun HabitosScreen() {
                                 categoriaNuevoHabit = "LECTURA"
                                 errorCrearHabit = null
                             },
-                            label = { Text("📚 Lectura", fontSize = 12.sp) }
+                            label = { Text("📚 Lectura", fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = WhiteSoft,
+                                containerColor = FieldColor,
+                                labelColor = GrayText
+                            )
                         )
 
                         FilterChip(
@@ -745,7 +1060,13 @@ fun HabitosScreen() {
                                 categoriaNuevoHabit = "EJERCICIO"
                                 errorCrearHabit = null
                             },
-                            label = { Text("🏃 Ejercicio", fontSize = 12.sp) }
+                            label = { Text("🏃 Ejercicio", fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = WhiteSoft,
+                                containerColor = FieldColor,
+                                labelColor = GrayText
+                            )
                         )
                     }
 
@@ -759,7 +1080,13 @@ fun HabitosScreen() {
                                 categoriaNuevoHabit = "BIENESTAR"
                                 errorCrearHabit = null
                             },
-                            label = { Text("🧘 Bienestar", fontSize = 12.sp) }
+                            label = { Text("🧘 Bienestar", fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = WhiteSoft,
+                                containerColor = FieldColor,
+                                labelColor = GrayText
+                            )
                         )
 
                         FilterChip(
@@ -768,11 +1095,17 @@ fun HabitosScreen() {
                                 categoriaNuevoHabit = "DESCANSO"
                                 errorCrearHabit = null
                             },
-                            label = { Text("🌙 Descanso", fontSize = 12.sp) }
+                            label = { Text("🌙 Descanso", fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = WhiteSoft,
+                                containerColor = FieldColor,
+                                labelColor = GrayText
+                            )
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = descripcionNuevoHabit,
@@ -781,21 +1114,28 @@ fun HabitosScreen() {
                             errorCrearHabit = null
                         },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = FieldColor,
+                            unfocusedContainerColor = FieldColor,
                             focusedTextColor = WhiteSoft,
                             unfocusedTextColor = WhiteSoft,
                             focusedBorderColor = PrimaryLight,
                             unfocusedBorderColor = BorderColor,
                             cursorColor = PrimaryLight
                         ),
-                        label = { Text("Descripción") },
-                        placeholder = { Text("Describe el hábito") },
+                        label = { Text("Descripción", color = GrayText) },
+                        placeholder = { Text("Describe el hábito", color = GrayText.copy(alpha = 0.5f)) },
                         minLines = 2
                     )
 
                     if (errorCrearHabit != null) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = errorCrearHabit!!, color = Color(0xFFEF4444), fontSize = 12.sp)
+                        Text(
+                            text = errorCrearHabit!!,
+                            color = Color(0xFFEF4444),
+                            fontSize = 12.sp
+                        )
                     }
                 }
             },
@@ -847,13 +1187,15 @@ fun HabitosScreen() {
                                         },
                                         onError = { error ->
                                             creandoHabit = false
-                                            errorCrearHabit = error.message ?: "Error al actualizar hábitos."
+                                            errorCrearHabit = error.message
+                                                ?: "Error al actualizar hábitos."
                                         }
                                     )
                                 },
                                 onError = { error ->
                                     creandoHabit = false
-                                    errorCrearHabit = error.message ?: "Error al editar hábito."
+                                    errorCrearHabit =
+                                        error.message ?: "Error al editar hábito."
                                 }
                             )
                         } else {
@@ -883,64 +1225,93 @@ fun HabitosScreen() {
                                         },
                                         onError = { error ->
                                             creandoHabit = false
-                                            errorCrearHabit = error.message ?: "Error al actualizar hábitos."
+                                            errorCrearHabit = error.message
+                                                ?: "Error al actualizar hábitos."
                                         }
                                     )
                                 },
                                 onError = { error ->
                                     creandoHabit = false
-                                    errorCrearHabit = error.message ?: "Error al crear hábito."
+                                    errorCrearHabit =
+                                        error.message ?: "Error al crear hábito."
                                 }
                             )
                         }
                     },
                     enabled = !creandoHabit,
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text(text = if (creandoHabit) "Guardando..." else "Guardar", color = WhiteSoft)
+                    Text(
+                        text = if (creandoHabit) "Guardando..." else "Guardar",
+                        color = WhiteSoft,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { if (!creandoHabit) mostrarCrearHabit = false }) {
-                    Text(text = "Cancelar", color = PrimaryLight)
+                    Text(text = "Cancelar", color = GrayText)
                 }
-            },
-            containerColor = CardColor
+            }
         )
     }
 
-    // Modal Crear Hábitos con IA
+    // Modal Crear Hábitos con IA Rediseñado (Sólido)
     if (mostrarIA) {
         AlertDialog(
             onDismissRequest = { mostrarIA = false },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = CardColorSolid,
             title = {
-                Text(text = "✨ Crear hábitos con IA", color = WhiteSoft, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = PrimaryLight,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Crear hábitos con IA",
+                        color = WhiteSoft,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             },
             text = {
                 Column {
-                    Text(text = "¿Qué quieres mejorar?", color = GrayText, fontSize = 13.sp)
+                    Text(text = "¿Qué aspecto de tu vida te gustaría mejorar hoy?", color = GrayText, fontSize = 13.sp)
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = objetivoIA,
                         onValueChange = { objetivoIA = it },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = FieldColor,
+                            unfocusedContainerColor = FieldColor,
                             focusedTextColor = WhiteSoft,
                             unfocusedTextColor = WhiteSoft,
                             focusedBorderColor = PrimaryLight,
                             unfocusedBorderColor = BorderColor,
                             cursorColor = PrimaryLight
                         ),
-                        label = { Text("Tu objetivo") },
-                        placeholder = { Text("Ej. Quiero mejorar mi sueño") },
-                        minLines = 2
+                        label = { Text("Tu objetivo", color = GrayText) },
+                        placeholder = { Text("Ej. Quiero mejorar la calidad de mi sueño y levantarme temprano", color = GrayText.copy(alpha = 0.5f)) },
+                        minLines = 3
                     )
 
                     if (errorCrearHabit != null) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = errorCrearHabit!!, color = Color(0xFFEF4444), fontSize = 12.sp)
+                        Text(
+                            text = errorCrearHabit!!,
+                            color = Color(0xFFEF4444),
+                            fontSize = 12.sp
+                        )
                     }
                 }
             },
@@ -950,7 +1321,8 @@ fun HabitosScreen() {
                         if (objetivoIA.isBlank()) return@Button
                         generandoIA = true
 
-                        val contextoHabitos = habitos.joinToString("\n") { "- ${it.nombre} (${it.categoria}): ${it.descripcion}" }
+                        val contextoHabitos =
+                            habitos.joinToString("\n") { "- ${it.nombre} (${it.categoria}): ${it.descripcion}" }
 
                         scope.launch {
                             val uid = auth.currentUser?.uid ?: run {
@@ -961,26 +1333,36 @@ fun HabitosScreen() {
                             val documentoDiario = db.collection("diarios")
                                 .document(uid)
                                 .collection("entradas")
-                                .orderBy("fecha", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                                .orderBy(
+                                    "fecha",
+                                    com.google.firebase.firestore.Query.Direction.DESCENDING
+                                )
                                 .limit(1)
                                 .get()
                                 .await()
 
-                            val contextoDiario = if (!documentoDiario.isEmpty) documentoDiario.documents[0].getString("texto") ?: "" else ""
+                            val contextoDiario =
+                                if (!documentoDiario.isEmpty) documentoDiario.documents[0].getString(
+                                    "texto"
+                                ) ?: "" else ""
 
                             val documentosChat = db.collection("usuarios")
                                 .document(uid)
                                 .collection("chat")
-                                .orderBy("fecha", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                                .orderBy(
+                                    "fecha",
+                                    com.google.firebase.firestore.Query.Direction.DESCENDING
+                                )
                                 .limit(10)
                                 .get()
                                 .await()
 
-                            val contextoChat = documentosChat.documents.reversed().joinToString("\n") { doc ->
-                                val texto = doc.getString("texto") ?: ""
-                                val esUsuario = doc.getBoolean("isUser") ?: false
-                                if (esUsuario) "Usuario: $texto" else "NeuraBloom: $texto"
-                            }
+                            val contextoChat = documentosChat.documents.reversed()
+                                .joinToString("\n") { doc ->
+                                    val texto = doc.getString("texto") ?: ""
+                                    val esUsuario = doc.getBoolean("isUser") ?: false
+                                    if (esUsuario) "Usuario: $texto" else "NeuraBloom: $texto"
+                                }
 
                             val resultadoIA = analizarHabitosConIA(
                                 objetivo = objetivoIA,
@@ -1003,53 +1385,115 @@ fun HabitosScreen() {
                         }
                     },
                     enabled = objetivoIA.isNotBlank() && !generandoIA,
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text(text = if (generandoIA) "🧠 Generando..." else "✨ Generar hábitos", color = WhiteSoft)
+                    if (generandoIA) {
+                        CircularProgressIndicator(
+                            color = WhiteSoft,
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Generando...", color = WhiteSoft)
+                    } else {
+                        Text(
+                            text = "✨ Generar hábitos",
+                            color = WhiteSoft,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { mostrarIA = false }) {
-                    Text(text = "Cancelar", color = PrimaryLight)
+                    Text(text = "Cancelar", color = GrayText)
                 }
-            },
-            containerColor = CardColor
+            }
         )
     }
 
-    // Modal Recomendaciones IA
+    // Modal Recomendaciones IA Rediseñado (Sólido)
     if (mostrarRecomendacionesIA) {
         AlertDialog(
             onDismissRequest = { mostrarRecomendacionesIA = false },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = CardColorSolid,
             title = {
-                Text(text = "✨ Recomendaciones IA", color = WhiteSoft, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = PrimaryLight,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Sugerencias IA",
+                        color = WhiteSoft,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             },
             text = {
                 Column {
-                    Text(text = "Selecciona los hábitos que quieras agregar:", color = GrayText, fontSize = 13.sp)
+                    Text(
+                        text = "Selecciona los hábitos que desees incorporar a tu rutina:",
+                        color = GrayText,
+                        fontSize = 13.sp
+                    )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     recomendacionesIA.forEachIndexed { index, recomendacion ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = seleccionadasIA.contains(index),
-                                onCheckedChange = { seleccionado ->
-                                    seleccionadasIA = if (seleccionado) seleccionadasIA + index else seleccionadasIA - index
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Primary,
-                                    uncheckedColor = GrayText,
-                                    checkmarkColor = WhiteSoft
-                                )
+                        val isSelected = seleccionadasIA.contains(index)
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) Primary.copy(alpha = 0.2f) else FieldColor,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (isSelected) PrimaryLight else BorderColor
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Column {
-                                Text(text = recomendacion.nombre, color = WhiteSoft, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                Text(text = recomendacion.descripcion, color = GrayText, fontSize = 11.sp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = { seleccionado ->
+                                        seleccionadasIA =
+                                            if (seleccionado) seleccionadasIA + index else seleccionadasIA - index
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = Primary,
+                                        uncheckedColor = GrayText,
+                                        checkmarkColor = WhiteSoft
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = recomendacion.nombre,
+                                        color = WhiteSoft,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = recomendacion.descripcion,
+                                        color = GrayText,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp
+                                    )
+                                }
                             }
                         }
                     }
@@ -1060,7 +1504,8 @@ fun HabitosScreen() {
                     onClick = {
                         val uid = auth.currentUser?.uid ?: return@Button
                         val espaciosDisponibles = 7 - habitos.size
-                        val seleccionadas = seleccionadasIA.sorted().take(espaciosDisponibles)
+                        val seleccionadas =
+                            seleccionadasIA.sorted().take(espaciosDisponibles)
 
                         if (seleccionadas.isEmpty()) return@Button
 
@@ -1086,7 +1531,12 @@ fun HabitosScreen() {
                                                 seleccionadasIA = emptySet()
                                                 recomendacionesIA = emptyList()
                                             },
-                                            onError = { Log.e("HABITOS", "Error al actualizar: ${it.message}") }
+                                            onError = {
+                                                Log.e(
+                                                    "HABITOS",
+                                                    "Error al actualizar: ${it.message}"
+                                                )
+                                            }
                                         )
                                     }
                                 },
@@ -1098,32 +1548,44 @@ fun HabitosScreen() {
                         }
                     },
                     enabled = seleccionadasIA.isNotEmpty(),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text(text = "Agregar seleccionados", color = WhiteSoft)
+                    Text(
+                        text = "Agregar seleccionados",
+                        color = WhiteSoft,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { mostrarRecomendacionesIA = false }) {
-                    Text(text = "Cancelar", color = PrimaryLight)
+                    Text(text = "Cancelar", color = GrayText)
                 }
-            },
-            containerColor = CardColor
+            }
         )
     }
 
-    // Modal Confirmar Eliminar
+    // Modal Confirmar Eliminar Rediseñado (Sólido)
     if (mostrarConfirmarEliminar && habitSeleccionado != null) {
         AlertDialog(
             onDismissRequest = { if (!eliminandoHabit) mostrarConfirmarEliminar = false },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = CardColorSolid,
             title = {
-                Text(text = "¿Eliminar hábito?", color = WhiteSoft, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "¿Eliminar hábito?",
+                    color = WhiteSoft,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             },
             text = {
                 Text(
                     text = "¿Seguro que quieres eliminar \"${habitSeleccionado?.nombre}\"? Esta acción no se puede deshacer.",
                     color = GrayText,
-                    fontSize = 13.sp
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
                 )
             },
             confirmButton = {
@@ -1153,17 +1615,23 @@ fun HabitosScreen() {
                         )
                     },
                     enabled = !eliminandoHabit,
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                 ) {
-                    Text(text = if (eliminandoHabit) "Eliminando..." else "Eliminar", color = WhiteSoft)
+                    Text(
+                        text = if (eliminandoHabit) "Eliminando..." else "Eliminar",
+                        color = WhiteSoft,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { if (!eliminandoHabit) mostrarConfirmarEliminar = false }) {
-                    Text(text = "Cancelar", color = PrimaryLight)
+                TextButton(onClick = {
+                    if (!eliminandoHabit) mostrarConfirmarEliminar = false
+                }) {
+                    Text(text = "Cancelar", color = GrayText)
                 }
-            },
-            containerColor = CardColor
+            }
         )
     }
 }

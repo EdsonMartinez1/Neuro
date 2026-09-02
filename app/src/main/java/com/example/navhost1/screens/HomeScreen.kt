@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Psychology
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -40,6 +42,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlin.random.Random
+import java.util.Calendar
 
 // Paleta NeuraBloom Dark Premium
 private val BackgroundTop = Color(0xFF0F172A)
@@ -49,11 +52,13 @@ private val Primary = Color(0xFF8B5CF6)
 private val PrimaryLight = Color(0xFFC084FC)
 private val PurpleGlow = Color(0xFF6D28D9)
 
-private val CardColor = Color(0xFF1E293B).copy(alpha = 0.75f)
-private val CardSecondary = Color(0xFF334155).copy(alpha = 0.5f)
+private val CardColor = Color(0xFF1E293B).copy(alpha = 0.85f)
+private val CardSolid = Color(0xFF1E293B)
+private val CardSecondary = Color(0xFF0F172A)
 
 private val WhiteSoft = Color(0xFFF8FAFC)
 private val GrayText = Color(0xFF94A3B8)
+private val BorderColor = Color(0xFF334155)
 
 data class HomeItem(
     val title: String,
@@ -66,7 +71,8 @@ data class HomeHabit(
     val nombre: String,
     val categoria: String,
     val completado: Boolean,
-    val xp: Long
+    val xp: Long,
+    val fechaXP: Long
 )
 
 private data class HomeParticle(
@@ -99,12 +105,12 @@ fun HomeScreen(navController: NavController, username: String?) {
 
     // Partículas de luz de fondo
     val particles = remember {
-        List(20) {
+        List(25) {
             HomeParticle(
                 x = Random.nextFloat(),
                 y = Random.nextFloat(),
-                radius = Random.nextFloat() * 3f + 1.5f,
-                alpha = Random.nextFloat() * 0.4f + 0.1f,
+                radius = Random.nextFloat() * 3.5f + 1.5f,
+                alpha = Random.nextFloat() * 0.4f + 0.15f,
                 speedY = Random.nextFloat() * 0.0008f + 0.0003f
             )
         }
@@ -139,15 +145,36 @@ fun HomeScreen(navController: NavController, username: String?) {
                     val id = documento.getString("id") ?: documento.id
                     val nombre = documento.getString("nombre") ?: return@mapNotNull null
                     val categoria = documento.getString("categoria") ?: ""
-                    val completado = documento.getBoolean("completado") ?: false
-                    val xpHabit = documento.getLong("xp") ?: 0L
+                    val completadoFirebase =
+                        documento.getBoolean("completado") ?: false
+
+                    val xpHabit =
+                        documento.getLong("xp") ?: 0L
+
+                    val fechaXP =
+                        documento.getLong("fechaXP") ?: 0L
+
+                    val hoy = Calendar.getInstance()
+
+                    val fechaCompletado = Calendar.getInstance().apply {
+                        timeInMillis = fechaXP
+                    }
+
+                    val completadoHoy =
+                        completadoFirebase &&
+                                fechaXP > 0L &&
+                                hoy.get(Calendar.YEAR) ==
+                                fechaCompletado.get(Calendar.YEAR) &&
+                                hoy.get(Calendar.DAY_OF_YEAR) ==
+                                fechaCompletado.get(Calendar.DAY_OF_YEAR)
 
                     HomeHabit(
                         id = id,
                         nombre = nombre,
                         categoria = categoria,
-                        completado = completado,
-                        xp = xpHabit
+                        completado = completadoHoy,
+                        xp = xpHabit,
+                        fechaXP = fechaXP
                     )
                 }
             }
@@ -202,13 +229,14 @@ fun HomeScreen(navController: NavController, username: String?) {
             }
     }
 
+    // Lista de Menú con el nuevo icono CheckCircle para Hábitos
     val menuItems = listOf(
         HomeItem("Chat IA", Icons.Default.Chat, "chat"),
         HomeItem("Herramientas", Icons.Default.Settings, "tools"),
         HomeItem("Diario", Icons.Default.Edit, "diary"),
         HomeItem("Contenido", Icons.Default.MenuBook, "content"),
         HomeItem("Estadísticas", Icons.Default.Psychology, "estadisticas"),
-        HomeItem("Hábitos", Icons.Default.Psychology, "habitos")
+        HomeItem("Hábitos", Icons.Default.CheckCircle, "habitos")
     )
 
     val xpMinimoNivel = when (arbolNivel) {
@@ -261,15 +289,15 @@ fun HomeScreen(navController: NavController, username: String?) {
             }
         }
 
-        // Resplandores Ambientales
+        // Resplandores Ambientales de Fondo
         Box(
             modifier = Modifier
-                .size(320.dp)
-                .offset(x = (-90).dp, y = (-60).dp)
+                .size(340.dp)
+                .offset(x = (-80).dp, y = (-50).dp)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(PurpleGlow.copy(alpha = 0.25f), Color.Transparent)
+                        colors = listOf(PurpleGlow.copy(alpha = 0.3f), Color.Transparent)
                     )
                 )
         )
@@ -285,8 +313,8 @@ fun HomeScreen(navController: NavController, username: String?) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                color = CardSolid,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
             ) {
                 Row(
                     modifier = Modifier
@@ -324,6 +352,7 @@ fun HomeScreen(navController: NavController, username: String?) {
                     Box(
                         modifier = Modifier
                             .size(56.dp)
+                            .shadow(12.dp, CircleShape, spotColor = Primary)
                             .clip(CircleShape)
                             .background(
                                 Brush.linearGradient(
@@ -358,10 +387,12 @@ fun HomeScreen(navController: NavController, username: String?) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .shadow(16.dp, RoundedCornerShape(28.dp), spotColor = Primary)
                         .background(
                             Brush.linearGradient(
                                 listOf(Color(0xFF7C3AED), Color(0xFF4F46E5))
-                            )
+                            ),
+                            RoundedCornerShape(28.dp)
                         )
                 ) {
                     Column(
@@ -382,7 +413,7 @@ fun HomeScreen(navController: NavController, username: String?) {
 
                             Text(
                                 text = "La IA analiza tus emociones, fortalece tus hábitos y hace crecer tu árbol emocional.",
-                                color = Color.White.copy(alpha = 0.85f),
+                                color = Color.White.copy(alpha = 0.9f),
                                 fontSize = 13.sp,
                                 lineHeight = 18.sp
                             )
@@ -393,7 +424,8 @@ fun HomeScreen(navController: NavController, username: String?) {
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.White
                             ),
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                         ) {
                             Text(
                                 "Comenzar ahora",
@@ -405,14 +437,14 @@ fun HomeScreen(navController: NavController, username: String?) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Árbol Emocional
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                color = CardSolid,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -506,7 +538,7 @@ fun HomeScreen(navController: NavController, username: String?) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Hábitos de hoy
             if (habitosHome.isNotEmpty()) {
@@ -516,8 +548,8 @@ fun HomeScreen(navController: NavController, username: String?) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(26.dp),
-                    color = CardColor,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                    color = CardSolid,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -611,15 +643,15 @@ fun HomeScreen(navController: NavController, username: String?) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(18.dp))
             }
 
             // Recomendación
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(26.dp),
-                color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                color = CardSolid,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -653,19 +685,19 @@ fun HomeScreen(navController: NavController, username: String?) {
                         colors = ButtonDefaults.buttonColors(containerColor = Primary),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text(text = textoBoton, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(text = textoBoton, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = WhiteSoft)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Racha Emocional
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(26.dp),
-                color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                color = CardSolid,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -694,14 +726,14 @@ fun HomeScreen(navController: NavController, username: String?) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Logros
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(26.dp),
-                color = CardColor,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                color = CardSolid,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -723,7 +755,7 @@ fun HomeScreen(navController: NavController, username: String?) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Accesos rápidos",
@@ -764,7 +796,7 @@ fun AchievementItem(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = if (unlocked) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF0F172A).copy(alpha = 0.4f),
+        color = if (unlocked) Color(0xFF10B981).copy(alpha = 0.15f) else CardSecondary.copy(alpha = 0.6f),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             if (unlocked) Color(0xFF10B981).copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f)
@@ -811,9 +843,9 @@ fun ModernMenuCard(
             .fillMaxWidth()
             .height(150.dp)
             .scale(scale),
-        shape = RoundedCornerShape(22.dp),
-        color = CardColor,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+        shape = RoundedCornerShape(24.dp),
+        color = CardSolid,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
         Column(
             modifier = Modifier

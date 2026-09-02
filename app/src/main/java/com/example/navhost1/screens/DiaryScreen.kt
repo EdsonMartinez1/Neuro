@@ -664,12 +664,45 @@ fun DiaryScreen(navController: NavController) {
                                                     else -> 1
                                                 }
 
-                                                val logros = hashMapOf(
-                                                    "primer_diario" to true,
-                                                    "racha_3" to (nuevaRacha >= 3),
-                                                    "racha_7" to (nuevaRacha >= 7),
-                                                    "arbol_nivel_5" to (nuevoNivel >= 5)
-                                                )
+                                                val logrosRef =
+                                                    userRef.collection("logros")
+                                                        .document("estado")
+
+                                                logrosRef.get()
+                                                    .addOnSuccessListener { documentoLogros ->
+
+                                                        val primerDiarioAnterior =
+                                                            documentoLogros.getBoolean("primer_diario") ?: false
+
+                                                        val racha3Anterior =
+                                                            documentoLogros.getBoolean("racha_3") ?: false
+
+                                                        val racha7Anterior =
+                                                            documentoLogros.getBoolean("racha_7") ?: false
+
+                                                        val arbol5Anterior =
+                                                            documentoLogros.getBoolean("arbol_nivel_5") ?: false
+
+                                                        val logros = hashMapOf(
+                                                            "primer_diario" to (
+                                                                    primerDiarioAnterior || true
+                                                                    ),
+
+                                                            "racha_3" to (
+                                                                    racha3Anterior || nuevaRacha >= 3
+                                                                    ),
+
+                                                            "racha_7" to (
+                                                                    racha7Anterior || nuevaRacha >= 7
+                                                                    ),
+
+                                                            "arbol_nivel_5" to (
+                                                                    arbol5Anterior || nuevoNivel >= 5
+                                                                    )
+                                                        )
+
+                                                        logrosRef.set(logros)
+                                                    }
 
                                                 userRef.update(
                                                     mapOf(
@@ -680,7 +713,7 @@ fun DiaryScreen(navController: NavController) {
                                                     )
                                                 )
 
-                                                userRef.collection("logros").document("estado").set(logros)
+
                                             }
 
                                             entradas = listOf(
